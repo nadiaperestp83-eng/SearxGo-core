@@ -22,6 +22,7 @@ source_set("vertical_tabs") {
     "//brave/browser/ui:brave_tab_prefs",
     "//brave/browser/ui/views/frame",
     "//brave/browser/ui/views/tabs",
+    "//brave/browser/workspaces",
     "//brave/components/constants",
     "//brave/components/vector_icons",
     "//chrome/app:command_ids",
