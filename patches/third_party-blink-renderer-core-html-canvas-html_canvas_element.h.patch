@@ -1,10 +1,10 @@
 diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.h b/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
-index 2b023e1a62915b5b1f3c58609da00570dd70ebb0..edeb9af1a801f2ab23000dd4b9d2d2d8e5a4b9e9 100644
+index c82b95165e4f8413bbe4630aca75c89c2cabe85f..00de7516df8b49ebcd4a23b99b09ee77fa9a6348 100644
 --- a/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
 +++ b/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
-@@ -362,6 +362,7 @@ class CORE_EXPORT HTMLCanvasElement final
- 
-   ElementImage* captureElementImage(Element* element, ExceptionState&);
+@@ -371,6 +371,7 @@ class CORE_EXPORT HTMLCanvasElement final
+   // Called when AxObject is created or its ignored state is changed.
+   void OnAxObjectIgnoredStateChanged(bool is_ignored);
  
 +  BRAVE_HTML_CANVAS_ELEMENT_H_
   protected:

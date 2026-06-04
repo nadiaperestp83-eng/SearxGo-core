@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/ui/page_action/page_action_controller.h b/chrome/browser/ui/page_action/page_action_controller.h
-index 16d1d1c34764fa0f410de320f83cb38a34aadfed..8d32a139fe5322d67f50a27d37ad030d341963cb 100644
+index 9c81241fab39a13b1288dafeb6220b87dbeb7e4a..d64def1f662f8e6f5ad56054b8649b558373f63a 100644
 --- a/chrome/browser/ui/page_action/page_action_controller.h
 +++ b/chrome/browser/ui/page_action/page_action_controller.h
-@@ -328,6 +328,7 @@ class PageActionController {
+@@ -333,6 +333,7 @@ class PageActionController {
    virtual void DecrementActivityCounter(actions::ActionId action_id) = 0;
  };
  
@@ -10,7 +10,7 @@ index 16d1d1c34764fa0f410de320f83cb38a34aadfed..8d32a139fe5322d67f50a27d37ad030d
  class PageActionControllerImpl : public PageActionController,
                                   public PinnedToolbarActionsModel::Observer {
   public:
-@@ -407,6 +408,7 @@ class PageActionControllerImpl : public PageActionController,
+@@ -413,6 +414,7 @@ class PageActionControllerImpl : public PageActionController,
    void OnActionsChanged() override;
  
   private:
@@ -18,7 +18,7 @@ index 16d1d1c34764fa0f410de320f83cb38a34aadfed..8d32a139fe5322d67f50a27d37ad030d
    using PageActionModelsMap =
        std::map<actions::ActionId, std::unique_ptr<PageActionModelInterface>>;
  
-@@ -437,7 +439,7 @@ class PageActionControllerImpl : public PageActionController,
+@@ -443,7 +445,7 @@ class PageActionControllerImpl : public PageActionController,
    void ActionItemChanged(const actions::ActionItem* action_item);
    void PinnedActionsModelChanged();
  
@@ -27,12 +27,12 @@ index 16d1d1c34764fa0f410de320f83cb38a34aadfed..8d32a139fe5322d67f50a27d37ad030d
        actions::ActionId action_id,
        bool is_ephemeral);
  
-@@ -497,6 +499,8 @@ class PageActionControllerImpl : public PageActionController,
+@@ -503,6 +505,8 @@ class PageActionControllerImpl : public PageActionController,
  
    base::WeakPtrFactory<PageActionControllerImpl> weak_factory_{this};
  };
 +}  // namespace chromium_impl
 +
  
- }  // namespace page_actions
- 
+ // Returns page action IDs that are present in the browser window's root action
+ // item.
