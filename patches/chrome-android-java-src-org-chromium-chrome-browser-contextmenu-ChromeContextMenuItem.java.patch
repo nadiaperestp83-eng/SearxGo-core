@@ -1,8 +1,8 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/contextmenu/ChromeContextMenuItem.java b/chrome/android/java/src/org/chromium/chrome/browser/contextmenu/ChromeContextMenuItem.java
-index a1c1ec1900819009a7e6ea855d759723f99aa54e..cf1ee145b4e6d367286f62b654c0322e0a17234b 100644
+index c646774c2fdea2527ed6825d49c8dcb83c11b709..e2580854e90238ccf10be6671fb5c8995a4edd1e 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/contextmenu/ChromeContextMenuItem.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/contextmenu/ChromeContextMenuItem.java
-@@ -80,7 +80,8 @@ class ChromeContextMenuItem {
+@@ -83,7 +83,8 @@ class ChromeContextMenuItem {
          Item.INSPECT_ELEMENT,
          Item.COPY_VIDEO_FRAME,
          Item.DOWNLOAD_VIDEO_FRAME,
@@ -12,18 +12,18 @@ index a1c1ec1900819009a7e6ea855d759723f99aa54e..cf1ee145b4e6d367286f62b654c0322e
      })
      @Retention(RetentionPolicy.SOURCE)
      public @interface Item {
-@@ -141,8 +142,9 @@ class ChromeContextMenuItem {
-         int COPY_VIDEO_FRAME = 43;
-         int DOWNLOAD_VIDEO_FRAME = 44;
-         int LENS_OVERLAY = 45;
-+        int COPY_CLEAN_LINK = 46;
+@@ -147,8 +148,9 @@ class ChromeContextMenuItem {
+         int COPY_VIDEO_FRAME = 46;
+         int DOWNLOAD_VIDEO_FRAME = 47;
+         int LENS_OVERLAY = 48;
++        int COPY_CLEAN_LINK = 49;
          // ALWAYS UPDATE!
--        int NUM_ENTRIES = 46;
+-        int NUM_ENTRIES = 49;
 +        int NUM_ENTRIES = COPY_CLEAN_LINK + 1;
      }
  
      /** Mapping from {@link Item} to the ID found in the ids.xml. */
-@@ -193,6 +195,7 @@ class ChromeContextMenuItem {
+@@ -202,6 +204,7 @@ class ChromeContextMenuItem {
          R.id.contextmenu_copy_video_frame, // Item.COPY_VIDEO_FRAME
          R.id.contextmenu_download_video_frame, // Item.DOWNLOAD_VIDEO_FRAME
          R.id.contextmenu_lens_overlay, // Item.LENS_OVERLAY
@@ -31,7 +31,7 @@ index a1c1ec1900819009a7e6ea855d759723f99aa54e..cf1ee145b4e6d367286f62b654c0322e
      };
  
      /** Mapping from {@link Item} to the ID of the string that describes the action of the item. */
-@@ -243,6 +246,7 @@ class ChromeContextMenuItem {
+@@ -255,6 +258,7 @@ class ChromeContextMenuItem {
          R.string.contextmenu_copy_video_frame, // Item.COPY_VIDEO_FRAME
          R.string.contextmenu_download_video_frame, // Item.DOWNLOAD_VIDEO_FRAME
          R.string.contextmenu_search_tab_with_google_lens, // Item.LENS_OVERLAY
