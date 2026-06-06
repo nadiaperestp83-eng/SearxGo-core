@@ -226,7 +226,6 @@ TEST(FeatureDefaultsTest, DisabledFeatures) {
       &metrics::structured::kPhoneHubStructuredMetrics,
       &multistep_filter::kMultistepFilter,
       &net::features::kEnableWebTransportDraft07,
-      &net::features::kWaitForFirstPartySetsInit,
       &network::features::kBrowsingTopics,
       &network::features::kInterestGroupStorage,
       &network::features::kSharedStorageAPI,
