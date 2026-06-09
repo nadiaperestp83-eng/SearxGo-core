@@ -283,6 +283,7 @@
 -AccountExtensionTrackerUnitTest.AccountExtensionsRemovedWhenSignedOut
 -AccountExtensionTrackerUnitTest.ExtensionSyncDisabledWhileSignedIn
 -AccountsPolicyManagerTest.ClearProfileWhenSigninAndSignoutNotAllowed
+-ActorTaskListBubbleControllerTest.ShowBubble*
 -All/DiceResponseHandlerParamTest.Signin*/*
 -All/SigninUtilHistorySyncOptinForManagedSettingsTest.*
 -AppMenuModelTest.ProfileSyncOnTest
@@ -324,6 +325,7 @@
 -ChromeBrowserFieldTrialsTest.SamplingTrials
 
 # These tests fail because we are modifying the HttpsUpgrades feature.
+-HttpsFirstModeSettingsTrackerTest.BalancedModeEnabledForEsbUsers
 -HttpsFirstModeSettingsTrackerTest.ImplicitTransition_EsbToggled
 -HttpsFirstModeSettingsTrackerTest.StartupDetailedState_EnabledBalancedEsbPairing
 
@@ -366,7 +368,6 @@
 -GeneratedSafeBrowsingPrefTest.OnSettingsBundleChanged_PrefChangedExternally
 -GeneratedSafeBrowsingPrefTest.UpdatePreference
 -GetUserPopulationForProfileTest.PopulatesPopulation_WithoutSBERDeprecation
--HttpsFirstModeSettingsTrackerTest.BalancedModeEnabledForEsbUsers
 -NotificationTelemetryServiceTest.OnPushEventFinished/*
 -NotificationTelemetryServiceTest.SendsTelemetryReport/*
 -NotificationTelemetryServiceTest.ServiceWorkerSubscriptionSendsServiceWorkerBehavior/*
@@ -404,6 +405,10 @@
 # This test fails because we insert our own bookmarks submenu into the app menu
 # model
 -AppMenuModelTest.ModelHasIcons
+
+# This test fails because we use our own preferences for showing the bookmarks
+# bar
+-BookmarkBarTabGroupsTest.SavedTabGroupsRespectPrefOnNTP
 
 # These tests fail because we disable
 # optimization_guide::features::kOptimizationGuideFetchingForSRP
@@ -630,7 +635,9 @@
 # These tests fail because ContextualTasksContextService cannot be created
 # because it depends on PageEmbeddingsService being created and that service is
 # not created because we disable kHistoryEmbeddings.
+-ContextualSearchboxHandlerTest.DriveDisclaimerControllerDoesNotCrashForIncognito
 -ContextualSearchboxHandlerTest.QueryAutocomplete_SetsLensInputs
+-ContextualSearchboxHandlerTest.QueryAutocomplete_SetsLensInputs_InToolModes
 -ContextualSearchboxHandlerTest.QueryAutocomplete_SkipsLensInputs_InToolModes
 -ContextualTasksContextServiceFactoryTest.CreatesServiceForProfile
 -ContextualTasksEligibilityManagerTest.*
