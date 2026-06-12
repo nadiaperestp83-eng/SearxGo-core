@@ -297,6 +297,12 @@ public class BytecodeTest {
         Assert.assertTrue(
                 classExists(
                         "org/chromium/chrome/browser/ntp_customization/BraveNtpCustomizationUtils")); // presubmit: ignore-long-line
+        Assert.assertTrue(
+                classExists(
+                        "org/chromium/chrome/browser/ntp_customization/theme/NtpCustomizationPromoManager")); // presubmit: ignore-long-line
+        Assert.assertTrue(
+                classExists(
+                        "org/chromium/chrome/browser/ntp_customization/theme/BraveNtpCustomizationPromoManager")); // presubmit: ignore-long-line
         Assert.assertTrue(classExists("org/chromium/chrome/browser/ui/appmenu/AppMenu"));
         Assert.assertTrue(
                 classExists(
@@ -518,6 +524,15 @@ public class BytecodeTest {
                         "isNtpThemeCustomizationEnabled",
                         MethodModifier.STATIC,
                         boolean.class,
+                        WindowAndroid.class,
+                        boolean.class));
+        Assert.assertTrue(
+                methodExists(
+                        "org/chromium/chrome/browser/ntp_customization/theme/NtpCustomizationPromoManager", // presubmit: ignore-long-line
+                        "canShowCustomizationIph",
+                        MethodModifier.STATIC,
+                        boolean.class,
+                        Tab.class,
                         WindowAndroid.class,
                         boolean.class));
 
