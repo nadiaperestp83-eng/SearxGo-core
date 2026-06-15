@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#include "extensions/browser/manifest_v2_experiment_manager.h"
+#include "extensions/browser/manifest_v2_handler.h"
 
 #include "base/feature_list.h"
 #include "extensions/common/extension_features.h"
@@ -16,5 +16,5 @@
     return false;                                             \
   }
 
-#include <extensions/browser/manifest_v2_experiment_manager.cc>
+#include <extensions/browser/manifest_v2_handler.cc>
 #undef BRAVE_SHOULD_DISABLE_LEGACY_EXTENSIONS
