@@ -6,6 +6,7 @@
 #include "extensions/browser/manifest_v2_experiment_manager.h"
 
 #include "base/feature_list.h"
+#include "extensions/common/extension_features.h"
 
 // This override is used to allow using MV2 extensions based on Brave's
 // extensions_mv2::features::kExtensionsManifestV2 feature flag.
