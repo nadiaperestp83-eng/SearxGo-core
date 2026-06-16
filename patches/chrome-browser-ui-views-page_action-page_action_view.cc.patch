@@ -1,5 +1,5 @@
 diff --git a/chrome/browser/ui/views/page_action/page_action_view.cc b/chrome/browser/ui/views/page_action/page_action_view.cc
-index 9ebffc5cf89c7e23039138e5890906ed6a07ec0d..ac2a7cf026abdb4156c55a2e3df16b4468097b9b 100644
+index 5f46fdaea39c77df5f714660648025bb1eeb1eca..83cad3d58e2fa22997e8735bba42143315f411e9 100644
 --- a/chrome/browser/ui/views/page_action/page_action_view.cc
 +++ b/chrome/browser/ui/views/page_action/page_action_view.cc
 @@ -173,7 +173,7 @@ void PageActionView::OnPageActionModelChanged(
@@ -11,7 +11,7 @@ index 9ebffc5cf89c7e23039138e5890906ed6a07ec0d..ac2a7cf026abdb4156c55a2e3df16b44
      if (model.GetShouldAnimateChipIn()) {
        AnimateIn(/*string_id=*/std::nullopt);
      } else {
-@@ -238,6 +238,7 @@ void PageActionView::UpdateBorder() {
+@@ -258,6 +258,7 @@ void PageActionView::UpdateBorder() {
        !observation_.GetSource()->GetImage().IsVectorIcon()) {
      border_insets = GetInsetsForNonVectorIcon();
    }
@@ -19,10 +19,10 @@ index 9ebffc5cf89c7e23039138e5890906ed6a07ec0d..ac2a7cf026abdb4156c55a2e3df16b44
    SetBorder(views::CreateEmptyBorder(border_insets));
  }
  
-@@ -280,6 +281,8 @@ void PageActionView::NotifyClick(const ui::Event& event) {
-           .SetProperty(kPageActionTriggerKey,
-                        static_cast<std::underlying_type_t<PageActionTrigger>>(
-                            trigger_source))
+@@ -304,6 +305,8 @@ void PageActionView::NotifyClick(const ui::Event& event) {
+               kPageActionEntryPointKey,
+               static_cast<std::underlying_type_t<PageActionEntryPoint>>(
+                   PageActionEntryPoint::kSuggestionChip))
 +          .SetProperty(kBravePageActionEventFlagKey,
 +                       event.IsMouseEvent() ? event.flags() : ui::EF_NONE)
            .Build());
