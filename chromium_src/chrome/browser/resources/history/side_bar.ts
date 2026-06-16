@@ -13,9 +13,12 @@ import type {PropertyValues} from '//resources/lit/v3_0/lit.rollup.js'
 import {
   HistorySideBarElement as HistorySideBarElementChromium,
 } from './side_bar-chromium.js'
+
+// <if expr="enable_local_ai">
 import {
   getBraveHistoryEmbeddingsBrowserProxy,
 } from './brave_history_embeddings_browser_proxy.js'
+// </if>
 
 injectStyle(HistorySideBarElementChromium, css`
   .cr-nav-menu-item {
@@ -80,6 +83,10 @@ class HistorySideBarElement extends HistorySideBarElementChromium {
     }
   }
 
+  // The loadTimeData entries below are injected unconditionally by the
+  // chromium_src override of `history_ui.cc`; they read false in Brave
+  // Origin builds because IsHistoryEmbeddingsFeatureEnabled() returns false
+  // there, so the lit_mangler-injected toggle row stays hidden.
   override accessor braveHistoryEmbeddingsFeatureEnabled: boolean =
       loadTimeData.getBoolean('isHistoryEmbeddingsFeatureEnabled')
   override accessor braveHistoryEmbeddingsEnabled: boolean =
@@ -95,9 +102,11 @@ class HistorySideBarElement extends HistorySideBarElementChromium {
         loadTimeData.getBoolean('enableHistoryEmbeddings')
   }
 
+  // <if expr="enable_local_ai">
   override onBraveHistoryEmbeddingsToggleChange(e: CustomEvent<boolean>) {
     getBraveHistoryEmbeddingsBrowserProxy().pageHandler.setEnabled(e.detail)
   }
+  // </if>
 }
 
 export {HistorySideBarElement}
