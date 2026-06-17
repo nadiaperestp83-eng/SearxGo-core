@@ -153,7 +153,8 @@ public class BraveMainSettingsFragmentTest {
 
         Preference tabsPreference = mMainSettings.findPreference(MainSettings.PREF_TABS);
         Preference closingAllTabsClosesBravePreference =
-                mMainSettings.getPreferenceScreen()
+                mMainSettings
+                        .getPreferenceScreen()
                         .findPreference(
                                 BraveMainPreferencesBase.PREF_CLOSING_ALL_TABS_CLOSES_BRAVE);
 
@@ -171,7 +172,8 @@ public class BraveMainSettingsFragmentTest {
 
         Preference tabsPreference = mMainSettings.findPreference(MainSettings.PREF_TABS);
         Preference closingAllTabsClosesBravePreference =
-                mMainSettings.getPreferenceScreen()
+                mMainSettings
+                        .getPreferenceScreen()
                         .findPreference(
                                 BraveMainPreferencesBase.PREF_CLOSING_ALL_TABS_CLOSES_BRAVE);
 

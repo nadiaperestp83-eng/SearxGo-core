@@ -47,6 +47,5 @@ public abstract class BraveFeatureList {
     public static final String BRAVE_SHRED = "BraveShredFeature";
     public static final String EMAIL_ALIASES = "EmailAliases";
     public static final String BRAVE_CUSTOM_SEARCH_ENGINES = "BraveCustomSearchEngines";
-    public static final String BRAVE_ANDROID_TAB_GROUPS_SETTINGS =
-            "BraveAndroidTabGroupsSettings";
+    public static final String BRAVE_ANDROID_TAB_GROUPS_SETTINGS = "BraveAndroidTabGroupsSettings";
 }
