@@ -15,6 +15,7 @@ import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//brave/components/brave_wayback_machine/buildflags/buildflags.gni")
 import("//brave/components/containers/buildflags/buildflags.gni")
 import("//brave/components/email_aliases/buildflags/buildflags.gni")
+import("//brave/components/local_ai/buildflags/buildflags.gni")
 import("//brave/components/playlist/core/common/buildflags/buildflags.gni")
 import("//brave/components/speedreader/common/buildflags/buildflags.gni")
 import("//brave/components/tor/buildflags/buildflags.gni")
@@ -30,8 +31,8 @@ preprocess_folder = "preprocessed"
 
 # grit (and generate the GRD for) brave's own static resources, they don't need
 # to be part of the build_webui.gni compile.
-# TODO(petemill): It is no longer neccessary to make our own grd and pak, we can add to
-# chromium's static_files list.
+# TODO(petemill): It is no longer neccessary to make our own grd and pak, we can
+# add to chromium's static_files list.
 brave_grit("resources") {
   defines = chrome_grit_defines
   defines += [
@@ -108,6 +109,7 @@ preprocess_if_expr("preprocess") {
     "enable_containers=$enable_containers",
     "enable_email_aliases=$enable_email_aliases",
     "enable_extensions=$enable_extensions",
+    "enable_local_ai=$enable_local_ai",
     "enable_pin_shortcut=$enable_pin_shortcut",
     "enable_playlist=$enable_playlist",
     "enable_speedreader=$enable_speedreader",

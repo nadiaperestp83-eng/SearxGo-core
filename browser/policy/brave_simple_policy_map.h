@@ -21,7 +21,12 @@
 #include "brave/components/email_aliases/buildflags/buildflags.h"
 #include "brave/components/global_privacy_control/pref_names.h"
 #include "brave/components/ipfs/buildflags/buildflags.h"
+#include "brave/components/local_ai/buildflags/buildflags.h"
 #include "brave/components/p3a/pref_names.h"
+
+#if BUILDFLAG(ENABLE_LOCAL_AI)
+#include "brave/components/local_ai/core/pref_names.h"
+#endif
 #include "brave/components/playlist/core/common/buildflags/buildflags.h"
 #include "brave/components/query_filter/common/pref_names.h"
 #include "brave/components/speedreader/common/buildflags/buildflags.h"
@@ -105,6 +110,10 @@ inline constexpr PolicyToPreferenceMapEntry kBraveSimplePolicyMap[] = {
 #endif
 #if BUILDFLAG(ENABLE_AI_CHAT)
     {policy::key::kBraveAIChatEnabled, ai_chat::prefs::kEnabledByPolicy,
+     base::Value::Type::BOOLEAN},
+#endif
+#if BUILDFLAG(ENABLE_LOCAL_AI)
+    {policy::key::kBraveLocalAIEnabled, local_ai::prefs::kBraveLocalAIEnabled,
      base::Value::Type::BOOLEAN},
 #endif
     {policy::key::kBraveP3AEnabled, p3a::kP3AEnabled,

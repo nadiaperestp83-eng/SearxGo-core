@@ -13,4 +13,8 @@ void RegisterProfilePrefs(PrefRegistrySimple* registry) {
   registry->RegisterBooleanPref(kBraveHistoryEmbeddingsEnabled, false);
 }
 
+void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
+  registry->RegisterBooleanPref(kBraveLocalAIEnabled, false);
+}
+
 }  // namespace local_ai::prefs

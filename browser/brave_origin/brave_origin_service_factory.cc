@@ -25,7 +25,12 @@
 #include "brave/components/brave_wayback_machine/pref_names.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/email_aliases/buildflags/buildflags.h"
+#include "brave/components/local_ai/buildflags/buildflags.h"
 #include "brave/components/p3a/pref_names.h"
+
+#if BUILDFLAG(ENABLE_LOCAL_AI)
+#include "brave/components/local_ai/core/pref_names.h"
+#endif
 #include "brave/components/playlist/core/common/buildflags/buildflags.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process.h"
@@ -127,6 +132,15 @@ constexpr auto kBraveOriginBrowserMetadata =
         {p3a::kP3AEnabled, BraveOriginServiceFactory::BraveOriginPrefMetadata(
                                false,
                                /*user_settable=*/true)},
+
+#if BUILDFLAG(ENABLE_LOCAL_AI)
+        // Local AI master switch — covers history embeddings and any future
+        // on-device AI surfaces.
+        {local_ai::prefs::kBraveLocalAIEnabled,
+         BraveOriginServiceFactory::BraveOriginPrefMetadata(
+             false,
+             /*user_settable=*/true)},
+#endif
     });
 
 // Define BraveOrigin-specific metadata for profile-level prefs

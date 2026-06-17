@@ -27,6 +27,7 @@
 #include "brave/components/brave_wallet/common/buildflags/buildflags.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/l10n/common/prefs.h"
+#include "brave/components/local_ai/core/pref_names.h"
 #include "brave/components/misc_metrics/general_browser_usage.h"
 #include "brave/components/misc_metrics/page_metrics.h"
 #include "brave/components/misc_metrics/privacy_hub_metrics.h"
@@ -171,6 +172,7 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
   brave_stats::RegisterLocalStatePrefs(registry);
 #endif
   brave_origin::RegisterLocalStatePrefs(registry);
+  local_ai::prefs::RegisterLocalStatePrefs(registry);
   ntp_background_images::RegisterLocalStatePrefs(registry);
   RegisterPrefsForBraveReferralsService(registry);
   brave_l10n::RegisterLocalStatePrefsForMigration(registry);

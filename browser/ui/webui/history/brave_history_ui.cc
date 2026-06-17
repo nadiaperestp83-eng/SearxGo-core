@@ -6,6 +6,7 @@
 #include "brave/browser/ui/webui/history/brave_history_ui.h"
 
 #include "brave/browser/ui/webui/history/brave_history_embeddings_page_handler.h"
+#include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/prefs/pref_service.h"
 
@@ -26,5 +27,6 @@ void BraveHistoryUI::CreatePageHandler(
         receiver) {
   page_handler_ = std::make_unique<BraveHistoryEmbeddingsPageHandler>(
       std::move(receiver), std::move(page),
-      Profile::FromWebUI(web_ui())->GetPrefs());
+      Profile::FromWebUI(web_ui())->GetPrefs(),
+      g_browser_process->local_state());
 }
