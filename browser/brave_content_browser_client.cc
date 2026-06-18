@@ -1221,8 +1221,7 @@ void BraveContentBrowserClient::CreateWebSocket(
   if (frame) {
     content::BrowserContext* browser_context = frame->GetBrowserContext();
     Profile* profile = Profile::FromBrowserContext(browser_context);
-    if (!TorProfileServiceFactory::IsTorDisabled(browser_context) &&
-        !profile->IsTor() &&
+    if (!profile->IsTor() &&
         profile->GetPrefs()->GetBoolean(tor::prefs::kOnionOnlyInTorWindows) &&
         net::IsOnion(url)) {
       mojo::Remote<network::mojom::WebSocketHandshakeClient> client(
@@ -1374,7 +1373,9 @@ void BraveContentBrowserClient::CreateThrottlesForNavigation(
   tor::TorNavigationThrottle::MaybeCreateAndAdd(registry, context->IsTor());
   tor::OnionLocationNavigationThrottle::MaybeCreateAndAdd(
       registry, TorProfileServiceFactory::IsTorDisabled(context),
-      context->IsTor());
+      context->IsTor(),
+      user_prefs::UserPrefs::Get(context)->GetBoolean(
+          tor::prefs::kOnionOnlyInTorWindows));
 #endif
 
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
