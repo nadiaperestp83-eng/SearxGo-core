@@ -68,7 +68,6 @@
 #include "chrome/browser/ui/frame/window_frame_util.h"
 #include "chrome/browser/ui/side_panel/side_panel_entry.h"
 #include "chrome/browser/ui/side_panel/side_panel_ui.h"
-#include "chrome/browser/ui/tab_search_feature.h"
 #include "chrome/browser/ui/tabs/features.h"
 #include "chrome/browser/ui/views/frame/browser_frame_view.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
@@ -450,17 +449,17 @@ void BraveBrowserView::UpdateSideBarHorizontalAlignment() {
 }
 
 void BraveBrowserView::UpdateSearchTabsButtonState() {
-  const bool is_vertical_tabs =
-      tabs::utils::ShouldShowBraveVerticalTabs(browser());
-  const bool use_search_button =
-      browser()->profile()->GetPrefs()->GetBoolean(kTabsSearchShow);
-  if (features::HasTabSearchToolbarButton()) {
-    if (auto* tab_search_button = toolbar()->tab_search_button()) {
-      tab_search_button->SetVisible(!is_vertical_tabs && use_search_button);
-    }
-  } else if (auto* tab_search_button =
-                 BrowserElementsViews::From(browser())
-                     ->GetViewAs<TabSearchButton>(kTabSearchButtonElementId)) {
+  // Tab search toolbar button has been removed from Chromium, with the combo
+  // button now being the toolbar entry point). Brave shows the in-tabstrip
+  // TabSearchButton, toggled here based on the vertical-tabs state and the
+  // show-tab-search pref.
+  if (auto* tab_search_button =
+          BrowserElementsViews::From(browser())->GetViewAs<TabSearchButton>(
+              kTabSearchButtonElementId)) {
+    const bool is_vertical_tabs =
+        tabs::utils::ShouldShowBraveVerticalTabs(browser());
+    const bool use_search_button =
+        browser()->profile()->GetPrefs()->GetBoolean(kTabsSearchShow);
     tab_search_button->SetVisible(!is_vertical_tabs && use_search_button);
   }
 }

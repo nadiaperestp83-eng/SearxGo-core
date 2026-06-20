@@ -94,7 +94,6 @@ source_set("ui") {
     "//chrome/browser/history",
     "//chrome/browser/image_fetcher",
     "//chrome/browser/ui:tab_modal_confirm_dialog_delegate",
-    "//chrome/browser/ui:tab_search_feature",
     "//chrome/browser/ui/browser_window",
     "//chrome/browser/ui/navigator",
     "//chrome/browser/ui/select_file_policy",
@@ -1516,7 +1515,6 @@ source_set("browser_tests") {
     defines = [ "HAS_OUT_OF_PROC_TEST_RUNNER" ]
 
     sources = [
-      "brave_browser_actions_browsertest.cc",
       "brave_browser_browsertest.cc",
       "views/frame/brave_system_menu_model_builder_browsertest.cc",
       "window_closing_confirm_browsertest.cc",
@@ -1529,7 +1527,6 @@ source_set("browser_tests") {
       "//chrome/browser/devtools:test_support",
       "//chrome/browser/profiles:profile",
       "//chrome/browser/ui",
-      "//chrome/browser/ui:tab_search_feature",
       "//chrome/browser/ui/browser_window",
       "//chrome/browser/ui/startup",
       "//chrome/test:test_support",
