@@ -1790,6 +1790,7 @@
 # We show tab search on the right side of the tab strip, which this test does
 # not expect
 -FullscreenTabSearchBubbleDialogTest.InvokeUi_default
+-TabSearchButtonBrowserUITest.InvokeUi_default
 
 # These tests fail because we only allow adding downloads button to the pinned
 # toolbar buttons container.
@@ -2189,10 +2190,6 @@
 
 # This test fails because we don't show avatar button with a single profile.
 -ProfileMenuViewBrowserTest.ProfileMenuDoubleOpenBeforeBatchUploadResults
-
-# These tests fail because we disable kHorizontalTabStripComboButton, but it's
-# required for the WebUIPinnedToolbarActions
--WebUIToolbarUIBrowserTest.*
 
 # These tests fail because they expect the hardcoded view name BrowserRootView,
 # but instead get BraveBrowserRootView.

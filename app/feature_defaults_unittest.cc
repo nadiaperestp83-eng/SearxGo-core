@@ -268,7 +268,6 @@ TEST(FeatureDefaultsTest, DisabledFeatures) {
       &switches::kSyncEnableBookmarksInTransportMode,
       &syncer::kSyncDetermineAccountManagedStatus,
 #if !BUILDFLAG(IS_ANDROID)
-      &tabs::kHorizontalTabStripComboButton,
       &tabs::kVerticalTabsLaunch,
 #endif  // !BUILDFLAG(IS_ANDROID)
       &variations::kReportOmniboxAutofocusHeader,

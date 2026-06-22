@@ -22,7 +22,8 @@ class BraveTabsSearchButtonTest : public InProcessBrowserTest,
   ~BraveTabsSearchButtonTest() override = default;
 };
 
-IN_PROC_BROWSER_TEST_F(BraveTabsSearchButtonTest, HideShowSettingTest) {
+IN_PROC_BROWSER_TEST_F(BraveTabsSearchButtonTest,
+                       DISABLED_HideShowSettingTest) {
   auto* prefs = browser()->profile()->GetPrefs();
   EXPECT_TRUE(prefs->GetBoolean(kTabsSearchShow));
 

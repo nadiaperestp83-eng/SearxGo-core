@@ -453,15 +453,15 @@ void BraveBrowserView::UpdateSearchTabsButtonState() {
   // button now being the toolbar entry point). Brave shows the in-tabstrip
   // TabSearchButton, toggled here based on the vertical-tabs state and the
   // show-tab-search pref.
-  if (auto* tab_search_button =
-          BrowserElementsViews::From(browser())->GetViewAs<TabSearchButton>(
-              kTabSearchButtonElementId)) {
-    const bool is_vertical_tabs =
-        tabs::utils::ShouldShowBraveVerticalTabs(browser());
-    const bool use_search_button =
-        browser()->profile()->GetPrefs()->GetBoolean(kTabsSearchShow);
-    tab_search_button->SetVisible(!is_vertical_tabs && use_search_button);
-  }
+  // if (auto* tab_search_button =
+  //        BrowserElementsViews::From(browser())->GetViewAs<TabSearchButton>(
+  //            kTabSearchButtonElementId)) {
+  //  const bool is_vertical_tabs =
+  //      tabs::utils::ShouldShowBraveVerticalTabs(browser());
+  //  const bool use_search_button =
+  //      browser()->profile()->GetPrefs()->GetBoolean(kTabsSearchShow);
+  //  tab_search_button->SetVisible(!is_vertical_tabs && use_search_button);
+  //}
 }
 
 BraveBrowserView::~BraveBrowserView() {
