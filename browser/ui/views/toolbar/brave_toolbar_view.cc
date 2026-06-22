@@ -22,6 +22,7 @@
 #include "brave/browser/ui/views/frame/vertical_tabs/vertical_tab_strip_container_view.h"
 #include "brave/browser/ui/views/frame/vertical_tabs/vertical_tab_strip_region_view.h"
 #include "brave/browser/ui/views/location_bar/brave_location_bar_view.h"
+#include "brave/browser/ui/views/tabs/vertical_tab_controller.h"
 #include "brave/browser/ui/views/tabs/vertical_tab_utils.h"
 #include "brave/browser/ui/views/toolbar/bookmark_button.h"
 #include "brave/browser/ui/views/toolbar/side_panel_button.h"
@@ -35,6 +36,7 @@
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_commands.h"
+#include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/layout_constants.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/bookmarks/bookmark_bubble_view.h"
@@ -271,7 +273,9 @@ void BraveToolbarView::Init() {
       base::BindRepeating(&BraveToolbarView::OnCompactModePrefChanged,
                           base::Unretained(this)));
 
-  if (tabs::utils::SupportsBraveVerticalTabs(browser_)) {
+  if (browser_->GetFeatures()
+          .vertical_tab_controller()
+          ->SupportsBraveVerticalTabs()) {
     show_vertical_tabs_.Init(brave_tabs::kVerticalTabsEnabled,
                              profile->GetPrefs(),
                              base::BindRepeating(
@@ -309,7 +313,9 @@ void BraveToolbarView::Init() {
   };
 
   // Add vertical tab toggle button to the left of the back button.
-  if (tabs::utils::SupportsBraveVerticalTabs(browser_)) {
+  if (browser_->GetFeatures()
+          .vertical_tab_controller()
+          ->SupportsBraveVerticalTabs()) {
     auto back_button_index = GetIndexOf(back_);
     vertical_tab_toggle_ =
         AddChildViewAt(std::make_unique<ToolbarButton>(base::BindRepeating(
@@ -399,7 +405,9 @@ void BraveToolbarView::Init() {
     ReorderChildView(avatar_button, *GetIndexOf(app_menu_button()) - 1);
   }
 
-  if (tabs::utils::SupportsBraveVerticalTabs(browser_)) {
+  if (browser_->GetFeatures()
+          .vertical_tab_controller()
+          ->SupportsBraveVerticalTabs()) {
     UpdateVerticalTabTogglePlacement();
   }
 
@@ -515,8 +523,9 @@ void BraveToolbarView::UpdateHorizontalPadding() {
     return;
   }
 
-  if (!tabs::utils::ShouldShowBraveVerticalTabs(browser()) ||
-      tabs::utils::ShouldShowWindowTitleForVerticalTabs(browser())) {
+  auto* vtc = browser()->GetFeatures().vertical_tab_controller();
+  if (!vtc->ShouldShowBraveVerticalTabs() ||
+      vtc->ShouldShowWindowTitleForVerticalTabs()) {
     SetBorder(nullptr);
     return;
   }
@@ -669,8 +678,9 @@ void BraveToolbarView::UpdateVerticalTabToggleVisibility() {
     return;
   }
 
-  vertical_tab_toggle_->SetVisible(
-      tabs::utils::ShouldShowBraveVerticalTabs(browser_));
+  vertical_tab_toggle_->SetVisible(browser_->GetFeatures()
+                                       .vertical_tab_controller()
+                                       ->ShouldShowBraveVerticalTabs());
 }
 
 void BraveToolbarView::UpdateVerticalTabTogglePlacement() {
@@ -690,7 +700,9 @@ void BraveToolbarView::UpdateVerticalTabTogglePlacement() {
   // same physical side as the strip, invert the placement choice when the UI
   // is RTL.
   const bool place_near_app_menu =
-      tabs::utils::IsVerticalTabOnRight(browser_) != base::i18n::IsRTL();
+      browser_->GetFeatures()
+          .vertical_tab_controller()
+          ->IsVerticalTabOnRight() != base::i18n::IsRTL();
 
   size_t target_idx = 0;
   if (place_near_app_menu) {

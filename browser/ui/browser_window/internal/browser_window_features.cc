@@ -71,7 +71,12 @@ class BraveVPNController {};
 #endif
 
 BrowserWindowFeatures::BrowserWindowFeatures() = default;
-BrowserWindowFeatures::~BrowserWindowFeatures() = default;
+BrowserWindowFeatures::~BrowserWindowFeatures() {
+  // As window feature controller is dependent on vertical tab controller, it
+  // should be destroyed first.
+  window_feature_controller_.reset();
+  vertical_tab_controller_.reset();
+}
 
 brave_rewards::RewardsPanelCoordinator*
 BrowserWindowFeatures::rewards_panel_coordinator() {
@@ -91,9 +96,15 @@ BraveVPNController* BrowserWindowFeatures::brave_vpn_controller() {
 }
 
 void BrowserWindowFeatures::Init(BrowserWindowInterface* browser) {
-  BrowserWindowFeatures_ChromiumImpl::Init(browser);
-
+  // Initialize vertical tab controller first because WindowFeatureController
+  // needs it to determine whether immersive fullscreen is supported.
+  // The WindowFeatureController takes vertical tab controller via constructor
+  // and it's initialized in BrowserWindowFeatures_ChromiumImpl::Init().
   auto* profile = browser->GetProfile();
+  vertical_tab_controller_ = std::make_unique<VerticalTabController>(
+      browser->GetType(), profile->GetPrefs());
+
+  BrowserWindowFeatures_ChromiumImpl::Init(browser);
 
 #if BUILDFLAG(ENABLE_BRAVE_REWARDS)
   if (brave_rewards::RewardsServiceFactory::GetForProfile(profile)) {
@@ -110,7 +121,7 @@ void BrowserWindowFeatures::Init(BrowserWindowInterface* browser) {
       std::make_unique<brave::BraveBrowserTabMenuModelDelegate>(
           browser->GetSessionID(), profile, app_browser_controller_.get(),
           tab_groups::TabGroupSyncServiceFactory::GetForProfile(profile),
-          browser);
+          vertical_tab_controller_.get());
 
   brave_non_client_hit_test_helper_ =
       std::make_unique<BraveNonClientHitTestHelper>();
@@ -184,10 +195,6 @@ void BrowserWindowFeatures::InitPostBrowserViewConstruction(
                                       },
                                       browser_view));
 #endif
-
-  vertical_tab_controller_ = std::make_unique<VerticalTabController>(
-      browser_view->browser()->GetType(),
-      browser_view->GetProfile()->GetPrefs());
 
   BrowserWindowFeatures_ChromiumImpl::InitPostBrowserViewConstruction(
       browser_view);
