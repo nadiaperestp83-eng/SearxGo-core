@@ -215,4 +215,10 @@ bool IsBraveSyncAIChatEnabled() {
   return base::FeatureList::IsEnabled(features::kBraveSyncAIChat);
 }
 
+BASE_FEATURE(kAIChatConversationExport, base::FEATURE_DISABLED_BY_DEFAULT);
+
+bool IsAIChatConversationExportEnabled() {
+  return base::FeatureList::IsEnabled(features::kAIChatConversationExport);
+}
+
 }  // namespace ai_chat::features
