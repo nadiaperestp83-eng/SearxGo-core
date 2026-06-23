@@ -20,23 +20,15 @@ struct ManagePasswordCredentialFields: View {
   var body: some View {
     Section {
       LabeledContent {
-        Group {
-          if isSiteDisabled {
-            Text(site)
-              .multilineTextAlignment(.trailing)
-              .frame(maxWidth: .infinity, alignment: .trailing)
-              .foregroundStyle(.tertiary)
-          } else {
-            TextField("", text: $site)
-              .textContentType(.URL)
-              .textInputAutocapitalization(.never)
-              .autocorrectionDisabled()
-              .multilineTextAlignment(.trailing)
-              .focused($focusedField, equals: .site)
-              .foregroundStyle(.secondary)
-          }
-        }
-        .accessibilityLabel(Strings.Login.loginInfoDetailsWebsiteFieldTitle)
+        TextField("", text: $site)
+          .textContentType(.URL)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+          .disabled(isSiteDisabled)
+          .multilineTextAlignment(.trailing)
+          .focused($focusedField, equals: .site)
+          .foregroundStyle(isSiteDisabled ? .tertiary : .secondary)
+          .accessibilityLabel(Strings.Login.loginInfoDetailsWebsiteFieldTitle)
       } label: {
         Text(Strings.Login.loginInfoDetailsWebsiteFieldTitle)
       }
