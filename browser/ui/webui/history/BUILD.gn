@@ -9,7 +9,10 @@ import("//mojo/public/tools/bindings/mojom.gni")
 assert(!is_android)
 
 source_set("history") {
-  sources = []
+  sources = [
+    "brave_history_ui.cc",
+    "brave_history_ui.h",
+  ]
 
   public_deps = [
     "//chrome/browser:browser_public_dependencies",
@@ -21,6 +24,7 @@ source_set("history") {
 
   deps = [
     "//base",
+    "//brave/components/local_ai/buildflags",
     "//chrome/browser/profiles:profile",
     "//chrome/common:constants",
     "//components/prefs",
@@ -31,8 +35,6 @@ source_set("history") {
     sources += [
       "brave_history_embeddings_page_handler.cc",
       "brave_history_embeddings_page_handler.h",
-      "brave_history_ui.cc",
-      "brave_history_ui.h",
     ]
 
     public_deps += [ ":mojom" ]
