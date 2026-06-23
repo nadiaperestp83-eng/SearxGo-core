@@ -481,6 +481,9 @@
   <message name="IDS_GLIC_SELECTION_ASK_ABOUT" desc="Label for the nudge asking about the selected text.">
     Ask about <ph name="TEXT">$1<ex>something</ex></ph>
   </message>
+  <message name="IDS_GLIC_SELECTION_MENU_HIDE_FOR_SITE" desc="Label for the menu item to hide the selection widget on the current website." translateable="false">
+    Hide for this site
+  </message>
 
   <!-- Educational Tip -->
   <message name="IDS_EDUCATIONAL_TIP_GLIC_TITLE" desc="Title for the Glic educational tip card." formatter_data="android_java">
@@ -494,6 +497,20 @@
   </message>
   <message name="IDS_EDUCATIONAL_TIP_GLIC_DISMISS_BUTTON" desc="Dismiss button text for the Glic educational tip card." formatter_data="android_java">
     No, thanks
+  </message>
+
+  <!-- Glic Bottom Sheet Interruption Dialog -->
+  <message name="IDS_GLIC_END_TASK_CONFIRMATION_TITLE" desc="Title for the dialog asking the user to confirm interrupting the current Gemini agent task." formatter_data="android_java">
+    End task to continue
+  </message>
+  <message name="IDS_GLIC_END_TASK_CONFIRMATION_DESCRIPTION" desc="Description for the dialog asking the user to confirm interrupting the current Gemini agent task." formatter_data="android_java">
+    This will end the task that Gemini is currently working on.
+  </message>
+  <message name="IDS_GLIC_END_TASK_CONFIRMATION_CANCEL" desc="Button text to cancel opening the new sheet and keep the current Gemini task running." formatter_data="android_java">
+    Cancel
+  </message>
+  <message name="IDS_GLIC_END_TASK_CONFIRMATION_YES" desc="Button text to confirm interrupting the current Gemini task and open the new sheet." formatter_data="android_java">
+    Yes, end task
   </message>
 
   <!-- Tab bottom sheet -->
@@ -520,5 +537,14 @@
   </message>
   <message name="IDS_GLIC_TASK_PAUSED_DESCRIPTION" desc="Subtitle description of the snackbar message shown when a Glic task is paused due to window resizing.">
     Increase window size to resume task
+  </message>
+  <message name="IDS_GLIC_BOTTOM_SHEET_CLOSED_A11Y_LABEL" desc="Accessibility announcement when the Gemini Bottom Sheet is closed." formatter_data="android_java" is_accessibility_with_no_ui="true">
+    Gemini Bottom Sheet closed.
+  </message>
+  <message name="IDS_GLIC_BOTTOM_SHEET_HALF_HEIGHT_A11Y_LABEL" desc="Accessibility announcement when the Gemini Bottom Sheet is opened to half height." formatter_data="android_java" is_accessibility_with_no_ui="true">
+    Gemini Bottom Sheet at half height.
+  </message>
+  <message name="IDS_GLIC_BOTTOM_SHEET_FULL_HEIGHT_A11Y_LABEL" desc="Accessibility announcement when the Gemini Bottom Sheet is opened to full height." formatter_data="android_java" is_accessibility_with_no_ui="true">
+    Gemini Bottom Sheet at full height
   </message>
 </grit-part>

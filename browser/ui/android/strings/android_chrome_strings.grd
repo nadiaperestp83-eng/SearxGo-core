@@ -2888,6 +2888,15 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       <message name="IDS_CONTEXTMENU_PRINT_PAGE" desc="This string is shown in the context menu for printing the current page. [CHAR_LIMIT=30]">
         Print
       </message>
+      <message name="IDS_CONTEXTMENU_BACK" desc="This string is shown in the context menu for going to the previous page in history. [CHAR_LIMIT=30]">
+        Back
+      </message>
+      <message name="IDS_CONTEXTMENU_FORWARD" desc="This string is shown in the context menu for going to the next page in history. [CHAR_LIMIT=30]">
+        Forward
+      </message>
+      <message name="IDS_CONTEXTMENU_RELOAD" desc="This string is shown in the context menu for reloading the current page. [CHAR_LIMIT=30]">
+        Reload
+      </message>
       <message name="IDS_CONTEXTMENU_OPEN_IN_OTHER_WINDOW" desc="Context sensitive menu item to open the selected link in the other window. [CHAR_LIMIT=30]">
         Open in other window
       </message>
@@ -4247,6 +4256,15 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       <message name="IDS_MENU_RECENT_TABS" desc="Menu item for opening the 'Recent tabs' page that shows recently closed tabs and pages the user has opened on his/her other devices. [CHAR_LIMIT=27]">
         Recent tabs
       </message>
+      <message name="IDS_MENU_RECENT_ENTRY_RESTORE_WINDOW" desc="Menu item to restore a recently closed window. [CHAR_LIMIT=27]">
+        Restore window
+      </message>
+      <message name="IDS_MENU_RECENT_ENTRY_RESTORE_GROUP" desc="Menu item to restore a recently closed tab group. [CHAR_LIMIT=27]">
+        Restore group
+      </message>
+      <message name="IDS_MENU_WINDOW_TITLE_WITH_TAB_COUNT" desc="Format string to display a window title followed by the number of tabs in that window, for example 'Window 1 - 5 tabs'. [CHAR_LIMIT=27]">
+        <ph name="WINDOW_TITLE">%1$s<ex>Window name</ex></ph> - <ph name="TAB_COUNT">%2$s<ex>5 tabs</ex></ph>
+      </message>
       <message name="IDS_MENU_EXTENSIONS" desc="Menu item for opening the 'Extensions' page that allows the user to manage installed extensions. [CHAR_LIMIT=27]">
         Extensions
       </message>
@@ -4309,9 +4327,6 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       </message>
       <message name="IDS_MENU_MORE_TOOLS" desc="Menu item to more tools. [CHAR_LIMIT=27]">
         More tools
-      </message>
-      <message name="IDS_MENU_READER_MODE_PREFS" desc="Menu item to show reader mode preferences pane, which allows users to change the appearance (font size, theme, etc.) of the page. [CHAR_LIMIT=27]">
-        Appearance
       </message>
       <message name="IDS_MENU_TASK_MANAGER" desc="Menu item to show the task manager. [CHAR_LIMIT=27]">
         Task manager
@@ -4469,6 +4484,11 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       <message name="IDS_BOOKMARK_TOOLBAR_SEARCH_TITLE" desc="Toolbar search title [CHAR_LIMIT=32]">
         Search
       </message>
+      <message name="IDS_BOOKMARK_SEARCH_NUM_RESULTS" is_accessibility_with_no_ui="true" desc="Announcement when bookmarks search results are updated.">
+        {NUM_RESULTS, plural,
+          =1 {1 result found}
+          other {# results found}}
+      </message>
       <message name="IDS_EDIT_BOOKMARK" desc="The string prompting the user to edit the content of a bookmark. [CHAR_LIMIT=30]">
         Edit bookmark
       </message>
@@ -4493,12 +4513,7 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       <message name="IDS_BOOKMARKS_SAVE_FLOW_CONTENT_DESCRIPTION" desc="The content description for the bookmark bottom sheet save flow. Read as accessibility string when tapping on the bottom sheet.">
         Bookmark saved to <ph name="FOLDER_NAME">%1$s<ex>Mobile bookmarks</ex></ph>
       </message>
-        <message name="IDS_BOOKMARKS_SAVE_FLOW_OPENED_HALF" desc="The accessibility string read when the bookmark bottom sheet save flow is half opened.">
-        Bookmark save flow opened at half height
-      </message>
-      <message name="IDS_BOOKMARKS_SAVE_FLOW_OPENED_FULL" desc="The accessibility string read when the bookmark bottom sheet save flow is fully opened.">
-        Bookmark save flow folders opened at full height
-      </message>
+
       <message name="IDS_BOOKMARKS_SAVE_FLOW_CLOSED_DESCRIPTION" desc="The accessibility string read when the bookmark bottom sheet save flow is closed.">
         Bookmark save flow closed
       </message>
@@ -4875,6 +4890,33 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       </message>
       <message name="IDS_PDF_DOCUMENT_PROPERTIES" desc="Menu option to view PDF document properties.">
         Document properties
+      </message>
+      <message name="IDS_PDF_PROPERTIES_FILE_NAME" desc="Label for file name in PDF document properties">
+        File name
+      </message>
+      <message name="IDS_PDF_PROPERTIES_FILE_SIZE" desc="Label for file size in PDF document properties">
+        File size
+      </message>
+      <message name="IDS_PDF_PROPERTIES_TITLE" desc="Label for title in PDF document properties">
+        Title
+      </message>
+      <message name="IDS_PDF_PROPERTIES_CREATED" desc="Label for creation date and time in PDF document properties">
+        Created
+      </message>
+      <message name="IDS_PDF_PROPERTIES_MODIFIED" desc="Label for modification date and time in PDF document properties">
+        Modified
+      </message>
+      <message name="IDS_PDF_PROPERTIES_PAGE_COUNT" desc="Label for page count in PDF document properties">
+        Page count
+      </message>
+      <message name="IDS_PDF_PROPERTIES_PAGE_SIZE" desc="Label for page size in PDF document properties">
+        Page size
+      </message>
+      <message name="IDS_PDF_PROPERTIES_VALUE_UNKNOWN" desc="Value used when a PDF property is unknown">
+        Unknown
+      </message>
+      <message name="IDS_PDF_PROPERTIES_CLOSE" desc="Button text to close the PDF properties dialog [CHAR_LIMIT=20]">
+        Close
       </message>
       <message name="IDS_PDF_DOWNLOAD" desc="Menu option to download the PDF document.">
         Download
@@ -5308,12 +5350,6 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
         {NUM_SELECTED, plural,
           =1 {Remove 1 selected item}
           other {Remove # selected items}}
-      </message>
-      <message name="IDS_ACCESSIBILITY_EXPAND_SECTION_HEADER" desc="Content description for the suggested section header expand button.">
-        Tap to expand
-      </message>
-      <message name="IDS_ACCESSIBILITY_COLLAPSE_SECTION_HEADER" desc="Content description for the suggested section header collapse button.">
-        Tap to collapse
       </message>
 
       <message name="IDS_ACCESSIBILITY_DEFAULT_APP_LABEL" desc="Accessibility label of the current window when app name is empty.">
@@ -6180,6 +6216,15 @@ To change this setting, <ph name="BEGIN_LINK">BEGIN_LINK</ph>delete the Brave da
       </message>
       <message name="IDS_SEND_TAB_TO_SELF_SHEET_TOOLBAR" desc="Header for device picker sheet where users can pick a device to send a tab to.">
         Send to
+      </message>
+      <message name="IDS_SEND_TAB_TO_SELF_ENHANCED_TITLE" desc="Header for the enhanced device picker sheet where users can pick a device to send a tab to.">
+        Choose a device
+      </message>
+      <message name="IDS_SEND_TAB_TO_SELF_SEND_BUTTON" desc="Label for the primary button to confirm sending a tab to a selected device.">
+        Send
+      </message>
+      <message name="IDS_SEND_TAB_TO_SELF_MANAGE_DEVICES_FOOTER" desc="Label for the secondary footer action to manage devices.">
+        Manage your devices
       </message>
       <message name="IDS_SEND_TAB_TO_SELF_MANAGE_DEVICES_LINK" desc="Text with a link to a page where the user can manage the devices they can share a tab to.">
         <ph name="BEGIN_LINK">&lt;link&gt;</ph>Your devices<ph name="END_LINK">&lt;/link&gt;</ph> · <ph name="EMAIL">%1$s<ex>foo@gmail.com</ex></ph>
