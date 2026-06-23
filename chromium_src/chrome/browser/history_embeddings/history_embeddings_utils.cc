@@ -42,14 +42,14 @@ OVERRIDE_FEATURE_DEFAULT_STATES({{
 }});
 
 bool IsHistoryEmbeddingsEnabledForProfile(Profile* profile) {
-#if !BUILDFLAG(ENABLE_LOCAL_AI)
-  return false;
-#else
+#if BUILDFLAG(ENABLE_LOCAL_AI)
   if (!IsHistoryEmbeddingsFeatureEnabled()) {
     return false;
   }
   return profile->GetPrefs()->GetBoolean(
       local_ai::prefs::kBraveHistoryEmbeddingsEnabled);
+#else
+  return false;
 #endif
 }
 
