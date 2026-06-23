@@ -7,21 +7,11 @@ import("//brave/build/config.gni")
 import("//build/buildflag_header.gni")
 import("//testing/test.gni")
 
-declare_args() {
-  # BRAVE_SERVICES_KEY_ID = TARGET_OS + '-' + CV_MAJOR + '-' + RELEASE_CHANNEL
-  # It is used (in combination with a secret seed) to generate service keys
-  # for each service, OS, chrominum version, release channel
-  # combination.
-  brave_services_key_id = ""
-}
-
-if (is_official_build) {
-  assert(brave_services_key_id != "")
-}
+_brave_services_key_id = "$target_os-$chromium_version_major-$brave_channel"
 
 buildflag_header("buildflags") {
   header = "buildflags.h"
-  flags = [ "BRAVE_SERVICES_KEY_ID=\"$brave_services_key_id\"" ]
+  flags = [ "BRAVE_SERVICES_KEY_ID=\"$_brave_services_key_id\"" ]
 }
 
 static_library("brave_service_keys") {
