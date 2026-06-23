@@ -15,6 +15,7 @@ source_set("history") {
   ]
 
   public_deps = [
+    ":mojom",
     "//chrome/browser:browser_public_dependencies",
     "//chrome/browser/ui",
     "//content/public/browser",
@@ -36,8 +37,6 @@ source_set("history") {
       "brave_history_embeddings_page_handler.cc",
       "brave_history_embeddings_page_handler.h",
     ]
-
-    public_deps += [ ":mojom" ]
 
     deps += [ "//brave/components/local_ai/core" ]
   }
