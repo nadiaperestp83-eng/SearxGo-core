@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-// Inject `isHistoryEmbeddingsFeatureEnabled` plus the toggle strings into
-// the chrome://history WebUI data source, hooked via macro substitution
-// of the upstream constructor's ManagedUIHandler::Initialize() call.
-// Strings are added unconditionally because the lit_mangler-injected
-// toggle row references `$i18n{...}` keys that ReplaceTemplateExpressions
-// resolves server-side, even in Brave Origin builds where the row is
-// kept hidden via property defaults in side_bar.ts.
+// Inject two loadTimeData entries (`isHistoryEmbeddingsFeatureEnabled` plus
+// the toggle's localized strings) into the chrome://history WebUI data
+// source. Hooked via macro substitution of the one-and-only
+// ManagedUIHandler::Initialize() call in the upstream constructor — by the
+// time it runs the data source has been created and is in scope. The
+// Mojo interface for write/observer plumbing lives in BraveHistoryUI; this
+// override only augments the data source.
 
 #include "brave/grit/brave_generated_resources.h"
 #include "chrome/browser/history_embeddings/history_embeddings_utils.h"

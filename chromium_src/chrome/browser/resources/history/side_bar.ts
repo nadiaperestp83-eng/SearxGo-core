@@ -83,10 +83,6 @@ class HistorySideBarElement extends HistorySideBarElementChromium {
     }
   }
 
-  // The loadTimeData entries below are injected unconditionally by the
-  // chromium_src override of `history_ui.cc`; they read false in Brave
-  // Origin builds because IsHistoryEmbeddingsFeatureEnabled() returns false
-  // there, so the lit_mangler-injected toggle row stays hidden.
   override accessor braveHistoryEmbeddingsFeatureEnabled: boolean =
       loadTimeData.getBoolean('isHistoryEmbeddingsFeatureEnabled')
   override accessor braveHistoryEmbeddingsEnabled: boolean =
