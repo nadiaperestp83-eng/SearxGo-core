@@ -43,9 +43,7 @@ source_set("history") {
   }
 }
 
-if (enable_local_ai) {
-  mojom("mojom") {
-    sources = [ "brave_history_embeddings.mojom" ]
-    webui_module_path = "/"
-  }
+mojom("mojom") {
+  sources = [ "brave_history_embeddings.mojom" ]
+  webui_module_path = "/"
 }

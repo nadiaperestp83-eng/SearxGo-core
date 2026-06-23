@@ -1,10 +1,10 @@
 diff --git a/chrome/browser/resources/history/BUILD.gn b/chrome/browser/resources/history/BUILD.gn
-index 0ce5aa85cb189af25caf345abb45b2a69f44e204..a54f507cce86639e429e7dfa1f5a0e65b292b8eb 100644
+index 0ce5aa85cb189af25caf345abb45b2a69f44e204..2624a7fbb7a6ee1f89dd908e9b1a13081ad967e0 100644
 --- a/chrome/browser/resources/history/BUILD.gn
 +++ b/chrome/browser/resources/history/BUILD.gn
 @@ -107,4 +107,5 @@ build_webui("build") {
      optimize_webui_host = "history"
      optimize_webui_in_files = [ "history.js" ]
    }
-+  import("//brave/components/local_ai/buildflags/buildflags.gni") import("//brave/browser/resources/history/sources.gni") preprocessor_defines = [ "enable_local_ai=$enable_local_ai" ] ts_files += brave_history_ts_files exclude_ts_preprocess_files = brave_history_ts_files preprocess_deps = brave_history_preprocess_deps if (brave_history_mojo_files != []) { mojo_files = brave_history_mojo_files mojo_files_deps = brave_history_mojo_files_deps }
++  import("//brave/components/local_ai/buildflags/buildflags.gni") import("//brave/browser/resources/history/sources.gni") preprocessor_defines = [ "enable_local_ai=$enable_local_ai" ] mojo_files = brave_history_mojo_files mojo_files_deps = brave_history_mojo_files_deps ts_files += brave_history_ts_files exclude_ts_preprocess_files = brave_history_ts_files preprocess_deps = brave_history_preprocess_deps
  }
