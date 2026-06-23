@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.h b/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
-index c82b95165e4f8413bbe4630aca75c89c2cabe85f..00de7516df8b49ebcd4a23b99b09ee77fa9a6348 100644
+index ff021b45a53f6b1d7e7f4240e631de823df46587..9e26e5fd932c58ceae0f0328c81ca00711db44ec 100644
 --- a/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
 +++ b/third_party/blink/renderer/core/html/canvas/html_canvas_element.h
-@@ -371,6 +371,7 @@ class CORE_EXPORT HTMLCanvasElement final
+@@ -382,6 +382,7 @@ class CORE_EXPORT HTMLCanvasElement final
    // Called when AxObject is created or its ignored state is changed.
    void OnAxObjectIgnoredStateChanged(bool is_ignored);
  

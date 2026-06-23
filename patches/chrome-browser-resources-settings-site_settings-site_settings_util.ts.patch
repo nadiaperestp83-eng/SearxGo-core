@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/resources/settings/site_settings/site_settings_util.ts b/chrome/browser/resources/settings/site_settings/site_settings_util.ts
-index c025fabf4e12370c706cfa9830a4c2017687cefd..f785f3f49e03b8ceb0a6d8bc5309afeecd132c43 100644
+index bb4f9d3411bee8249a113db6010d3a0426e42830..e153f2cf55157dd7107589b7089ac20e2b5d5670 100644
 --- a/chrome/browser/resources/settings/site_settings/site_settings_util.ts
 +++ b/chrome/browser/resources/settings/site_settings/site_settings_util.ts
-@@ -111,7 +111,7 @@ export function getLocalizationStringForContentType(
+@@ -110,7 +110,7 @@ export function getLocalizationStringForContentType(
      case ContentSettingsTypes.SMART_CARD_READERS:
        return null;
      default:
