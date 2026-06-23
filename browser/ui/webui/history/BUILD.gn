@@ -8,43 +8,42 @@ import("//mojo/public/tools/bindings/mojom.gni")
 
 assert(!is_android)
 
-if (enable_local_ai) {
-  mojom("mojom") {
-    sources = [ "brave_history_embeddings.mojom" ]
-    webui_module_path = "/"
-  }
+source_set("history") {
+  sources = []
 
-  source_set("history") {
-    sources = [
+  public_deps = [
+    "//chrome/browser:browser_public_dependencies",
+    "//chrome/browser/ui",
+    "//content/public/browser",
+    "//mojo/public/cpp/bindings",
+    "//ui/webui/resources/cr_components/help_bubble:mojo_bindings",
+  ]
+
+  deps = [
+    "//base",
+    "//chrome/browser/profiles:profile",
+    "//chrome/common:constants",
+    "//components/prefs",
+    "//content/public/common",
+  ]
+
+  if (enable_local_ai) {
+    sources += [
       "brave_history_embeddings_page_handler.cc",
       "brave_history_embeddings_page_handler.h",
       "brave_history_ui.cc",
       "brave_history_ui.h",
     ]
 
-    public_deps = [
-      ":mojom",
-      "//chrome/browser:browser_public_dependencies",
-      "//chrome/browser/ui",
-      "//content/public/browser",
-      "//mojo/public/cpp/bindings",
-      "//ui/webui/resources/cr_components/help_bubble:mojo_bindings",
-    ]
+    public_deps += [ ":mojom" ]
 
-    deps = [
-      "//base",
-      "//brave/components/local_ai/core",
-      "//chrome/browser/profiles:profile",
-      "//chrome/common:constants",
-      "//components/prefs",
-      "//content/public/common",
-    ]
+    deps += [ "//brave/components/local_ai/core" ]
   }
-} else {
-  # Empty stub so callers (e.g. brave_chrome_browser_deps in
-  # //brave/browser/sources.gni) can always reference this target without
-  # tying themselves to enable_local_ai. History embeddings happens to be
-  # the only consumer today, but the dep edge isn't conceptually local-AI.
-  group("history") {
+}
+
+if (enable_local_ai) {
+  mojom("mojom") {
+    sources = [ "brave_history_embeddings.mojom" ]
+    webui_module_path = "/"
   }
 }
