@@ -11,11 +11,6 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
       - name: Install Python 3.11 e dependências
         run: |
           sudo apt-get update
@@ -39,57 +34,72 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      - name: Setup depot_tools (tarball + GN manual)
+      - name: Setup depot_tools e GN binário
         run: |
-          # Cria diretório temporário único e vazio
-          DEPOT_DIR=$(mktemp -d)
-          echo "DEPOT_DIR=$DEPOT_DIR" >> $GITHUB_ENV
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            $HOME/depot_tools
+          export PATH="$HOME/depot_tools:$PATH"
 
-          # Baixa e extrai o depot_tools oficial
-          curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
-          unzip -q /tmp/depot_tools.zip -d "$DEPOT_DIR"
+          # Remove wrapper Python do gn e instala binário real
+          rm -f $HOME/depot_tools/gn
+          curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
+            -o /tmp/gn.zip
+          unzip -qo /tmp/gn.zip -d $HOME/depot_tools
+          chmod +x $HOME/depot_tools/gn
 
-          # Remove o wrapper gn (script Python) para evitar conflito
-          rm -f "$DEPOT_DIR"/gn
+          # Persiste PATH para todos os steps seguintes
+          echo "$HOME/depot_tools" >> $GITHUB_PATH
 
-          # Baixa e extrai o binário GN (substitui o wrapper)
-          curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
-          unzip -qo /tmp/gn.zip -d "$DEPOT_DIR"
-          chmod +x "$DEPOT_DIR"/gn
-
-          # Adiciona ao PATH
-          echo "$DEPOT_DIR" >> $GITHUB_PATH
-          export PATH="$DEPOT_DIR:$PATH"
+          # Verifica
           gn --version
-          which gclient
+          gclient --version
 
-      - name: Configurar gclient
+      - name: Clonar brave-browser (raiz do .gn)
         run: |
-          export PATH="$DEPOT_DIR:$PATH"
-          cd ${{ github.workspace }}
-          gclient config --name src https://github.com/brave/brave-browser --unmanaged
+          export PATH="$HOME/depot_tools:$PATH"
+          # brave-browser é a raiz que contém o .gn e o DEPS que puxa o brave-core
+          git clone --depth=1 \
+            https://github.com/brave/brave-browser.git \
+            $HOME/brave-browser
+
+      - name: Substituir brave-core pelo seu fork
+        run: |
+          # Edita o DEPS do brave-browser para apontar seu fork no lugar do brave-core oficial
+          sed -i \
+            "s|https://github.com/brave/brave-core|https://github.com/nadiaperestp83-eng/SearxGo-core|g" \
+            $HOME/brave-browser/DEPS
 
       - name: gclient sync
         run: |
-          export PATH="$DEPOT_DIR:$PATH"
-          cd ${{ github.workspace }}
-          gclient sync --delete_unversioned_trees --reset --nohooks --jobs=8
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/brave-browser
+          gclient sync \
+            --no-history \
+            --shallow \
+            --delete_unversioned_trees \
+            --reset \
+            --nohooks \
+            --jobs=8
 
-      - name: Verificar conteúdo de src
+      - name: Verificar .gn
         run: |
-          ls -la ${{ github.workspace }}/src || echo "src não existe!"
-          test -f ${{ github.workspace }}/src/.gn && echo ".gn encontrado!" || echo ".gn NÃO encontrado!"
+          test -f $HOME/brave-browser/src/.gn \
+            && echo ".gn ENCONTRADO" \
+            || (echo ".gn NAO ENCONTRADO — abortando" && exit 1)
 
       - name: gclient runhooks
         run: |
-          export PATH="$DEPOT_DIR:$PATH"
-          cd ${{ github.workspace }}
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/brave-browser
           gclient runhooks
 
       - name: Escrever args.gn
         run: |
-          mkdir -p ${{ github.workspace }}/src/out/arm64
-          cat > ${{ github.workspace }}/src/out/arm64/args.gn << 'EOF'
+          mkdir -p $HOME/brave-browser/src/out/arm64
+          cat > $HOME/brave-browser/src/out/arm64/args.gn << 'EOF'
           target_os = "android"
           target_cpu = "arm64"
           android_channel = "stable"
@@ -119,19 +129,28 @@ jobs:
 
       - name: gn gen
         run: |
-          export PATH="$DEPOT_DIR:$PATH"
-          cd ${{ github.workspace }}/src
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/brave-browser/src
           gn gen out/arm64
+
+      - name: Validar search_engines target
+        run: |
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/brave-browser/src
+          autoninja -C out/arm64 components/search_engines:search_engines
 
       - name: Build chrome_public_apk
         run: |
-          export PATH="$DEPOT_DIR:$PATH"
-          cd ${{ github.workspace }}/src
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/brave-browser/src
           autoninja -C out/arm64 chrome_public_apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: searxgo-arm64-${{ github.sha }}
-          path: ${{ github.workspace }}/src/out/arm64/apks/ChromePublic.apk
+          path: $HOME/brave-browser/src/out/arm64/apks/ChromePublic.apk
           retention-days: 7
