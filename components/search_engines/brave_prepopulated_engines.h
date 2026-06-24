@@ -13,38 +13,20 @@
 namespace TemplateURLPrepopulateData {
 
 // ****************************************************************************
-// IMPORTANT! Make sure to bump the value of kBraveCurrentDataVersion in
-// here if you add, remove, or make changes to the engines in here or
-// brave_prepopulated_engines.cc or to mappings in
-// chromium_src/components/regional_capabilities/regional_capabilities_utils.cc.
+// IMPORTANT! Bumped para 33 — adicionado PREPOPULATED_ENGINE_ID_SEARXGO
+// e searxgo engine. Bump obrigatório a cada mudança de engines.
 // ****************************************************************************
 
-// The version is important to increment because Chromium will cache the list
-// of search engines that are shown. When the version is incremented, Chromium
-// will conditionally merge changes from the new version of the list.
-//
-// For more info, see:
-// ComputeMergeEnginesRequirements in components/search_engines/util.cc;
-
-inline constexpr int kBraveCurrentDataVersion = 32;
+inline constexpr int kBraveCurrentDataVersion = 33;  // era 32, bumped +1
 
 // DO NOT CHANGE THIS ONE. Used for backfilling kBraveDefaultSearchVersion.
 inline constexpr int kBraveFirstTrackedDataVersion = 6;
 
-// See comments on prepopulated engines ids in
-// components/search_engines/prepopulated_engines_schema.json above the
-// definition of the id field and in
-// third_party/search_engines_data/resources/definitions/prepopulated_engines.json
-// at the top of the file. Currently taken ids range under 120, but we'd want to
-// leave room for additions by Chromium, so starting our ids from 500. If
-// Chromium adds one of these engines to their list with a different id we need
-// to either patch theirs out or use ModifyEngineParams function to match our
-// previous definition (likely including the engine id).
 // LINT.IfChange
 enum BravePrepopulatedEngineID : unsigned int {
   PREPOPULATED_ENGINE_ID_INVALID = 0,
 
-  // These engine IDs are already defined in prepopulated_engines.json
+  // IDs já definidos no prepopulated_engines.json do Chromium
   PREPOPULATED_ENGINE_ID_GOOGLE = 1,
   PREPOPULATED_ENGINE_ID_YAHOO_JP = 2,
   PREPOPULATED_ENGINE_ID_BING = 3,
@@ -52,36 +34,27 @@ enum BravePrepopulatedEngineID : unsigned int {
   PREPOPULATED_ENGINE_ID_NAVER = 67,
   PREPOPULATED_ENGINE_ID_DAUM = 68,
   PREPOPULATED_ENGINE_ID_ECOSIA = 101,
-  // These engine IDs are not defined in Chromium
-  // When adding a new engine, also add it to kBraveAddedEngines in
-  // chromium_src/components/search_engines/
-  //   brave_template_url_prepopulate_data_unittest.cc, so that we would know if
-  // Chromium adds the same engine in the future.
+
+  // IDs Brave — não definidos no Chromium
   BRAVE_PREPOPULATED_ENGINES_START = 500,
-  PREPOPULATED_ENGINE_ID_AMAZON = 500,  // No longer in defaults (2/2019).
+  PREPOPULATED_ENGINE_ID_AMAZON = 500,
   PREPOPULATED_ENGINE_ID_DUCKDUCKGO,
 #if BUILDFLAG(IS_ANDROID)
-  PREPOPULATED_ENGINE_ID_DUCKDUCKGO_LITE,  // No longer in defaults (7/2020).
+  PREPOPULATED_ENGINE_ID_DUCKDUCKGO_LITE,
 #endif
-  PREPOPULATED_ENGINE_ID_FINDX,         // No longer exists (11/2018).
-  PREPOPULATED_ENGINE_ID_GITHUB,        // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_INFOGALACTIC,  // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_MDNWEBDOCS,    // No longer in defaults (2/2019).
+  PREPOPULATED_ENGINE_ID_FINDX,
+  PREPOPULATED_ENGINE_ID_GITHUB,
+  PREPOPULATED_ENGINE_ID_INFOGALACTIC,
+  PREPOPULATED_ENGINE_ID_MDNWEBDOCS,
   PREPOPULATED_ENGINE_ID_QWANT,
-  PREPOPULATED_ENGINE_ID_SEARX,            // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_SEMANTICSCHOLAR,  // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_STACKOVERFLOW,    // No longer in defaults (2/2019).
-
-  PREPOPULATED_ENGINE_ID_STARTPAGE,  // This ID was used before Chromium added
-                                     // startpage to their prepopulated engines
-                                     // (with id 113). We modify their engine
-                                     // to use our id so that we don't have to
-                                     // replace engines saved in user prefs.
-
-  PREPOPULATED_ENGINE_ID_TWITTER,       // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_WIKIPEDIA,     // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_WOLFRAMALPHA,  // No longer in defaults (2/2019).
-  PREPOPULATED_ENGINE_ID_YOUTUBE,       // No longer in defaults (2/2019).
+  PREPOPULATED_ENGINE_ID_SEARX,
+  PREPOPULATED_ENGINE_ID_SEMANTICSCHOLAR,
+  PREPOPULATED_ENGINE_ID_STACKOVERFLOW,
+  PREPOPULATED_ENGINE_ID_STARTPAGE,
+  PREPOPULATED_ENGINE_ID_TWITTER,
+  PREPOPULATED_ENGINE_ID_WIKIPEDIA,
+  PREPOPULATED_ENGINE_ID_WOLFRAMALPHA,
+  PREPOPULATED_ENGINE_ID_YOUTUBE,
   PREPOPULATED_ENGINE_ID_DUCKDUCKGO_DE,
   PREPOPULATED_ENGINE_ID_DUCKDUCKGO_AU_NZ_IE,
 
@@ -122,9 +95,13 @@ enum BravePrepopulatedEngineID : unsigned int {
 
   PREPOPULATED_ENGINE_ID_BRAVE,
   PREPOPULATED_ENGINE_ID_BRAVE_TOR,
+
+  // SearxGo — motor privado via instância SearXNG própria
+  PREPOPULATED_ENGINE_ID_SEARXGO,
 };
 // LINT.ThenChange(//brave/components/search_engines/brave_prepopulated_engines.h:kBraveCurrentDataVersion)
 
+extern const PrepopulatedEngine searxgo;
 extern const PrepopulatedEngine duckduckgo;
 extern const PrepopulatedEngine duckduckgo_de;
 extern const PrepopulatedEngine duckduckgo_au_nz_ie;
@@ -141,11 +118,13 @@ extern const PrepopulatedEngine brave_bing;
 extern const PrepopulatedEngine brave_yahoo_jp;
 extern const PrepopulatedEngine brave_google;
 
-// Maps BravePrepopulatedEngineID to Chromium's PrepopulatedEngine.
+// Maps BravePrepopulatedEngineID -> PrepopulatedEngine
 // LINT.IfChange
 inline constexpr auto kBraveEngines =
     base::MakeFixedFlatMap<BravePrepopulatedEngineID,
                            const PrepopulatedEngine*>({
+        // SearxGo como primeiro entry — torna-se o default
+        {PREPOPULATED_ENGINE_ID_SEARXGO, &searxgo},
         {PREPOPULATED_ENGINE_ID_GOOGLE, &brave_google},
         {PREPOPULATED_ENGINE_ID_YANDEX, &brave_yandex},
         {PREPOPULATED_ENGINE_ID_BING, &brave_bing},
