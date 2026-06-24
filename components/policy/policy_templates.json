@@ -1,0 +1,68 @@
+{
+  "MetricsReportingEnabled": {
+    "type": "main",
+    "schema": { "type": "boolean" },
+    "default": false,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": false,
+    "id": 234,
+    "caption": "Enable usage and crash-related data reporting",
+    "desc": "Disabled in SearxGo build."
+  },
+  "SafeBrowsingEnabled": {
+    "type": "main",
+    "schema": { "type": "boolean" },
+    "default": false,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": false,
+    "id": 67,
+    "caption": "Enable Safe Browsing",
+    "desc": "Disabled in SearxGo build — privacy first."
+  },
+  "SafeBrowsingExtendedReportingEnabled": {
+    "type": "main",
+    "schema": { "type": "boolean" },
+    "default": false,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": false,
+    "id": 303,
+    "caption": "Enable Safe Browsing Extended Reporting",
+    "desc": "Disabled in SearxGo build."
+  },
+  "AutoUpdateCheckPeriodMinutes": {
+    "type": "main",
+    "schema": { "type": "integer", "minimum": 0 },
+    "default": 0,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": 0,
+    "id": 4,
+    "caption": "Auto-update check period",
+    "desc": "Zero disables automatic update checks."
+  },
+  "BraveRewardsDisabled": {
+    "type": "main",
+    "schema": { "type": "boolean" },
+    "default": true,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": true,
+    "id": 9001,
+    "caption": "Disable Brave Rewards",
+    "desc": "Removed from SearxGo build."
+  },
+  "BraveWalletDisabled": {
+    "type": "main",
+    "schema": { "type": "boolean" },
+    "default": true,
+    "supported_on": ["android:*"],
+    "features": { "can_be_recommended": false, "can_be_mandatory": true },
+    "example_value": true,
+    "id": 9002,
+    "caption": "Disable Brave Wallet",
+    "desc": "Removed from SearxGo build."
+  }
+}
