@@ -11,40 +11,16 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      # ============================================================
-      # 1. LIBERAR ESPAÇO EM DISCO
-      # ============================================================
       - name: Free disk space
         run: |
           echo "=== Espaço antes da limpeza ==="
           df -h /
-
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /usr/local/julia*
-          sudo rm -rf /opt/microsoft
-          sudo rm -rf /opt/pipx
-          sudo rm -rf /opt/az
-          sudo rm -rf /opt/google/chrome
-          sudo rm -rf /usr/share/az*
-          sudo rm -rf /usr/share/maven
-          sudo rm -rf /usr/share/gradle
-          sudo rm -rf /usr/share/texlive
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/lib/jvm
-          sudo rm -rf /usr/share/java
-          sudo apt-get clean
-          sudo apt-get autoremove -y
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/share/swift /usr/local/julia* /opt/microsoft /opt/pipx /opt/az /opt/google/chrome /usr/share/az* /usr/share/maven /usr/share/gradle /usr/share/texlive /usr/local/share/boost /usr/lib/jvm /usr/share/java
+          sudo apt-get clean && sudo apt-get autoremove -y
           docker system prune -af || true
-
           echo "=== Espaço após a limpeza ==="
           df -h /
 
-      # ============================================================
-      # 2. INSTALAÇÃO DE DEPENDÊNCIAS BÁSICAS
-      # ============================================================
       - name: Install Python 3.11 e dependências
         run: |
           sudo apt-get update
@@ -52,76 +28,47 @@ jobs:
           sudo add-apt-repository -y ppa:deadsnakes/ppa
           sudo apt-get update
           sudo apt-get install -y \
-            python3.11 \
-            python3.11-distutils \
-            python3.11-venv \
-            build-essential \
-            git \
-            curl \
-            lsb-release \
-            openjdk-17-jdk \
-            lib32stdc++6 \
-            lib32z1 \
-            pkg-config \
-            unzip \
-            nodejs \
-            npm
+            python3.11 python3.11-distutils python3.11-venv \
+            build-essential git curl lsb-release openjdk-17-jdk \
+            lib32stdc++6 lib32z1 pkg-config unzip nodejs npm
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
           sudo update-alternatives --set python3 /usr/bin/python3.11
-          python3 --version
 
-      # ============================================================
-      # 3. DEPOT_TOOLS COM GIT CLONE + YES | PARA EVITAR PROMPTS
-      # ============================================================
       - name: Setup depot_tools e GN binário
         run: |
           rm -rf $HOME/depot_tools
           yes | git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             $HOME/depot_tools
-
-          # Remove o wrapper gn (script Python) e baixa o binário
           rm -f $HOME/depot_tools/gn
           curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
             -o /tmp/gn.zip
           unzip -qo /tmp/gn.zip -d $HOME/depot_tools
           chmod +x $HOME/depot_tools/gn
-
           echo "$HOME/depot_tools" >> $GITHUB_PATH
           export PATH="$HOME/depot_tools:$PATH"
-          gn --version
-          gclient --version
+          gn --version && gclient --version
 
-      # ============================================================
-      # 4. DETECTAR VERSÃO DO CHROMIUM USADA PELO BRAVE
-      # ============================================================
-      - name: Clonar brave-browser para pegar versão correta do Chromium
+      - name: Clonar brave-browser para pegar versão Chromium
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           git clone --depth=1 \
             https://github.com/brave/brave-browser.git \
             $HOME/brave-browser
-          echo "=== package.json — versão chromium ==="
           cat $HOME/brave-browser/package.json | python3 -c "
           import sys, json
           d = json.load(sys.stdin)
           cfg = d.get('config', {})
           print('chromium_version:', cfg.get('projects', {}).get('chrome', {}).get('tag', 'N/A'))
-          print('brave_core_ref:', cfg.get('projects', {}).get('brave-core', {}).get('ref', 'N/A'))
           "
 
-      # ============================================================
-      # 5. GERAR .gclient COM O SEU FORK (SearxGo-core)
-      # ============================================================
-      - name: Extrair versão Chromium e criar workspace
+      - name: Criar .gclient com SearxGo-core
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
-
           mkdir -p $HOME/searxgo-build
           cd $HOME/searxgo-build
-
           CHROMIUM_TAG=$(python3 -c "
           import json
           d = json.load(open('$HOME/brave-browser/package.json'))
@@ -129,10 +76,8 @@ jobs:
           tag = cfg.get('projects', {}).get('chrome', {}).get('tag', '')
           print(tag)
           " 2>/dev/null)
-
-          echo "CHROMIUM_TAG detectado: $CHROMIUM_TAG"
-
-          cat > $HOME/searxgo-build/.gclient << GCLIENT
+          echo "CHROMIUM_TAG: $CHROMIUM_TAG"
+          cat > .gclient << GCLIENT
           solutions = [
             {
               "name": "src",
@@ -148,42 +93,19 @@ jobs:
           ]
           target_os = ["android"]
           GCLIENT
-
-          echo "=== .gclient gerado ==="
-          cat $HOME/searxgo-build/.gclient
           echo "BUILD_DIR=$HOME/searxgo-build" >> $GITHUB_ENV
 
-      # ============================================================
-      # 6. SYNC COM PARALELISMO REDUZIDO
-      # ============================================================
-      - name: gclient sync — Chromium + SearxGo-core
+      - name: gclient sync
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd $HOME/searxgo-build
-          gclient sync \
-            --no-history \
-            --shallow \
-            --delete_unversioned_trees \
-            --reset \
-            --nohooks \
-            --jobs=4
+          gclient sync --no-history --shallow --delete_unversioned_trees --reset --nohooks --jobs=4
 
-      # ============================================================
-      # 7. VERIFICAÇÃO E ESPAÇO
-      # ============================================================
-      - name: Verificar estrutura src e espaço
+      - name: Verificar estrutura
         run: |
-          echo "=== raiz src ==="
-          ls -la $HOME/searxgo-build/src/ | head -30
-          echo "=== .gn ==="
-          test -f $HOME/searxgo-build/src/.gn \
-            && echo ".gn ENCONTRADO OK" \
-            || (echo ".gn NAO encontrado — abortando" && exit 1)
-          echo "=== src/brave ==="
-          ls $HOME/searxgo-build/src/brave/ | head -10 || echo "brave NAO existe"
-          echo "=== Espaço em disco ==="
           df -h /
+          test -f $HOME/searxgo-build/src/.gn || (echo ".gn não encontrado" && exit 1)
 
       - name: gclient runhooks
         run: |
@@ -192,9 +114,7 @@ jobs:
           cd $HOME/searxgo-build
           gclient runhooks
 
-      # ============================================================
-      # 8. args.gn OTIMIZADO PARA ESPAÇO
-      # ============================================================
+      # ========== ARGS.GN CORRIGIDO ==========
       - name: Escrever args.gn
         run: |
           mkdir -p $HOME/searxgo-build/src/out/arm64
@@ -206,15 +126,22 @@ jobs:
           is_official_build = true
           is_component_build = false
           symbol_level = 0
+
+          # === CORREÇÃO PARA O ERRO DO V8 ===
+          v8_enable_sandbox = false          # desabilita o sandbox, remove exigência de libc++ hardening
+          # Removido: use_custom_libcxx = false (causava conflito)
+
           enable_resource_allowlist_generation = false
           enable_junit_tests = false
           enable_java_templates = false
+
           brave_rewards_enabled = false
           brave_wallet_enabled = false
           brave_news_enabled = false
           brave_sync_v2_enabled = false
           brave_vpn_enabled = false
           speedreader_enabled = false
+
           enable_reporting = false
           enable_crash_reporter = false
           enable_background_mode = false
@@ -224,16 +151,13 @@ jobs:
           enable_remoting = false
           disable_omaha = true
           disable_fieldtrial_testing_config = true
+
           arm_use_neon = true
           use_thin_lto = true
           is_cfi = false
           use_cxx_rtti = false
-          use_custom_libcxx = false
           EOF
 
-      # ============================================================
-      # 9. BUILD COM NINJA LIMITADO (para evitar pico de espaço)
-      # ============================================================
       - name: gn gen
         run: |
           export PATH="$HOME/depot_tools:$PATH"
@@ -241,16 +165,13 @@ jobs:
           cd $HOME/searxgo-build/src
           gn gen out/arm64
 
-      - name: Build chrome_public_apk (com -j 4)
+      - name: Build chrome_public_apk
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd $HOME/searxgo-build/src
           autoninja -C out/arm64 -j 4 chrome_public_apk
 
-      # ============================================================
-      # 10. UPLOAD APK
-      # ============================================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
