@@ -1,48 +1,31 @@
-# .github/workflows/build.yml
 name: SearxGo Android Build
 
 on:
   push:
     branches: [main]
+  workflow_dispatch: # Adicionado para você disparar manualmente pela aba Actions
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 360
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install depot_tools
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          echo "$(pwd)/depot_tools" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
 
       - name: Configure gclient
         run: |
-          gclient config https://github.com/SEU_USER/brave-core --name=src/brave
-          gclient sync --no-history --shallow
+          gclient config --name src https://github.com/brave/brave-browser
+          gclient sync --no-history --shallow --nohooks
 
-      - name: GN Args (arm64, produção, sem telemetria)
+      - name: GN Args
         run: |
           cd src
-          gn gen out/arm64 --args='
-            target_os="android"
-            target_cpu="arm64"
-            is_debug=false
-            is_official_build=true
-            brave_rewards_enabled=false
-            brave_wallet_enabled=false
-            brave_news_enabled=false
-            safe_browsing_mode=0
-            enable_reporting=false
-            enable_crash_reporter=false
-            use_official_google_api_keys=false
-            enable_remoting=false
-            disable_fieldtrial_testing_config=true
-          '
+          gn gen out/arm64 --args='target_os="android" target_cpu="arm64" is_debug=false is_official_build=true brave_rewards_enabled=false brave_wallet_enabled=false brave_news_enabled=false safe_browsing_mode=0 enable_reporting=false enable_crash_reporter=false use_official_google_api_keys=false enable_remoting=false disable_fieldtrial_testing_config=true'
 
       - name: Build
         run: |
@@ -54,3 +37,4 @@ jobs:
         with:
           name: searxgo-arm64
           path: src/out/arm64/apks/ChromePublic.apk
+          if-no-files-found: error
