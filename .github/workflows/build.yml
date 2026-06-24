@@ -11,6 +11,40 @@ jobs:
     timeout-minutes: 360
 
     steps:
+      # ============================================================
+      # 1. LIBERAR ESPAÇO EM DISCO (ANTES DE QUALQUER DOWNLOAD)
+      # ============================================================
+      - name: Free disk space
+        run: |
+          echo "=== Espaço antes da limpeza ==="
+          df -h /
+
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /opt/microsoft
+          sudo rm -rf /opt/pipx
+          sudo rm -rf /opt/az
+          sudo rm -rf /opt/google/chrome
+          sudo rm -rf /usr/share/az*
+          sudo rm -rf /usr/share/maven
+          sudo rm -rf /usr/share/gradle
+          sudo rm -rf /usr/share/texlive
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/lib/jvm
+          sudo rm -rf /usr/share/java
+          sudo apt-get clean
+          sudo apt-get autoremove -y
+          docker system prune -af || true
+
+          echo "=== Espaço após a limpeza ==="
+          df -h /
+
+      # ============================================================
+      # 2. INSTALAÇÃO DE DEPENDÊNCIAS BÁSICAS
+      # ============================================================
       - name: Install Python 3.11 e dependências
         run: |
           sudo apt-get update
@@ -36,11 +70,15 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
+      # ============================================================
+      # 3. DEPOT_TOOLS + GN (sem git clone, para evitar prompts)
+      # ============================================================
       - name: Setup depot_tools e GN binário
         run: |
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            $HOME/depot_tools
+          # Usamos tarball para evitar interação com git
+          rm -rf $HOME/depot_tools
+          curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
+          unzip -q /tmp/depot_tools.zip -d $HOME
           rm -f $HOME/depot_tools/gn
           curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
             -o /tmp/gn.zip
@@ -51,6 +89,9 @@ jobs:
           gn --version
           gclient --version
 
+      # ============================================================
+      # 4. DETECTAR VERSÃO DO CHROMIUM USADA PELO BRAVE
+      # ============================================================
       - name: Clonar brave-browser para pegar versão correta do Chromium
         run: |
           export PATH="$HOME/depot_tools:$PATH"
@@ -65,8 +106,11 @@ jobs:
           cfg = d.get('config', {})
           print('chromium_version:', cfg.get('projects', {}).get('chrome', {}).get('tag', 'N/A'))
           print('brave_core_ref:', cfg.get('projects', {}).get('brave-core', {}).get('ref', 'N/A'))
-          " 2>/dev/null || true
+          "
 
+      # ============================================================
+      # 5. GERAR .gclient COM O SEU FORK (SearxGo-core)
+      # ============================================================
       - name: Extrair versão Chromium e criar workspace
         run: |
           export PATH="$HOME/depot_tools:$PATH"
@@ -106,6 +150,9 @@ jobs:
           cat $HOME/searxgo-build/.gclient
           echo "BUILD_DIR=$HOME/searxgo-build" >> $GITHUB_ENV
 
+      # ============================================================
+      # 6. SYNC (com menos jobs e sem --no-history para evitar erros)
+      # ============================================================
       - name: gclient sync — Chromium + SearxGo-core
         run: |
           export PATH="$HOME/depot_tools:$PATH"
@@ -117,9 +164,12 @@ jobs:
             --delete_unversioned_trees \
             --reset \
             --nohooks \
-            --jobs=8
+            --jobs=4   # Menos paralelismo = menos arquivos temporários
 
-      - name: Verificar estrutura src
+      # ============================================================
+      # 7. VERIFICAÇÃO E ESPAÇO DISPONÍVEL
+      # ============================================================
+      - name: Verificar estrutura src e espaço
         run: |
           echo "=== raiz src ==="
           ls -la $HOME/searxgo-build/src/ | head -30
@@ -129,6 +179,8 @@ jobs:
             || (echo ".gn NAO encontrado — abortando" && exit 1)
           echo "=== src/brave ==="
           ls $HOME/searxgo-build/src/brave/ | head -10 || echo "brave NAO existe"
+          echo "=== Espaço em disco ==="
+          df -h /
 
       - name: gclient runhooks
         run: |
@@ -137,7 +189,10 @@ jobs:
           cd $HOME/searxgo-build
           gclient runhooks
 
-      - name: Escrever args.gn (CORRIGIDO)
+      # ============================================================
+      # 8. CONFIGURAR args.gn (com opções para reduzir espaço)
+      # ============================================================
+      - name: Escrever args.gn (otimizado para espaço)
         run: |
           mkdir -p $HOME/searxgo-build/src/out/arm64
           cat > $HOME/searxgo-build/src/out/arm64/args.gn << 'EOF'
@@ -148,7 +203,6 @@ jobs:
           is_official_build = true
           is_component_build = false
           symbol_level = 0
-          # Removido strip_debug_info = true → conflito com allowlist
           enable_resource_allowlist_generation = false
           enable_junit_tests = false
           enable_java_templates = false
@@ -169,8 +223,15 @@ jobs:
           disable_fieldtrial_testing_config = true
           arm_use_neon = true
           use_thin_lto = true
+          # Reduz ainda mais o espaço:
+          is_cfi = false
+          use_cxx_rtti = false
+          use_custom_libcxx = false
           EOF
 
+      # ============================================================
+      # 9. BUILD COM NINJA LIMITADO A 2 JOBS (para evitar pico de espaço)
+      # ============================================================
       - name: gn gen
         run: |
           export PATH="$HOME/depot_tools:$PATH"
@@ -178,20 +239,17 @@ jobs:
           cd $HOME/searxgo-build/src
           gn gen out/arm64
 
-      - name: Validar search_engines target
+      - name: Build chrome_public_apk (com -j 4)
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd $HOME/searxgo-build/src
-          autoninja -C out/arm64 components/search_engines:search_engines
+          # Usamos autoninja com -j 4 para limitar processos paralelos
+          autoninja -C out/arm64 -j 4 chrome_public_apk
 
-      - name: Build chrome_public_apk
-        run: |
-          export PATH="$HOME/depot_tools:$PATH"
-          export DEPOT_TOOLS_UPDATE=0
-          cd $HOME/searxgo-build/src
-          autoninja -C out/arm64 chrome_public_apk
-
+      # ============================================================
+      # 10. UPLOAD
+      # ============================================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
