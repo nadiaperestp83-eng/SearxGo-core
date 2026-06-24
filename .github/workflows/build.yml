@@ -39,38 +39,36 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      # ========== NOVA ETAPA: depot_tools em $HOME ==========
-      - name: Setup depot_tools (fora do workspace)
+      # ========== NOVA ETAPA: depot_tools em /tmp ==========
+      - name: Setup depot_tools (em /tmp)
         run: |
-          # Remove qualquer instalação anterior (opcional)
-          rm -rf $HOME/depot_tools
+          # Remove qualquer resíduo (por segurança)
+          rm -rf /tmp/depot_tools
 
-          # Clona o depot_tools para o diretório home
+          # Clona para /tmp
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            $HOME/depot_tools
+            /tmp/depot_tools
 
-          # Baixa o GN manualmente (URL oficial)
+          # Baixa GN manualmente
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
-          unzip -q /tmp/gn.zip -d $HOME/depot_tools
-          chmod +x $HOME/depot_tools/gn
+          unzip -q /tmp/gn.zip -d /tmp/depot_tools
+          chmod +x /tmp/depot_tools/gn
 
-          # Adiciona ao PATH permanentemente
-          echo "$HOME/depot_tools" >> $GITHUB_PATH
-          export PATH="$HOME/depot_tools:$PATH"
-
-          # Verifica
+          # Adiciona ao PATH
+          echo "/tmp/depot_tools" >> $GITHUB_PATH
+          export PATH="/tmp/depot_tools:$PATH"
           gn --version
 
       - name: Configurar gclient
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
+          export PATH="/tmp/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient config --name src https://github.com/brave/brave-browser --unmanaged
 
       - name: gclient sync (sem --no-history e --shallow)
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
+          export PATH="/tmp/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient sync --delete_unversioned_trees --reset --nohooks --jobs=8
 
@@ -81,7 +79,7 @@ jobs:
 
       - name: gclient runhooks
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
+          export PATH="/tmp/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient runhooks
 
@@ -118,13 +116,13 @@ jobs:
 
       - name: gn gen
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
+          export PATH="/tmp/depot_tools:$PATH"
           cd ${{ github.workspace }}/src
           gn gen out/arm64
 
       - name: Build chrome_public_apk
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
+          export PATH="/tmp/depot_tools:$PATH"
           cd ${{ github.workspace }}/src
           autoninja -C out/arm64 chrome_public_apk
 
