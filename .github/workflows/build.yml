@@ -9,31 +9,73 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 360
-    env:
-      # Definimos o caminho fixo para o depot_tools dentro do workspace
-      DEPOT_TOOLS: ${{ github.workspace }}/depot_tools
-      PATH: ${{ github.workspace }}/depot_tools:${{ env.PATH }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip git curl lsb-release openjdk-17-jdk
+          sudo apt-get install -y \
+            build-essential \
+            python3 \
+            python3-pip \
+            git \
+            curl \
+            lsb-release \
+            openjdk-17-jdk \
+            lib32stdc++6 \
+            lib32z1 \
+            pkg-config
 
       - name: Clone depot_tools
         run: |
-          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            ${{ github.workspace }}/depot_tools
+
+      - name: Bootstrap depot_tools e verificar gn
+        run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          cd ${{ github.workspace }}/depot_tools
+          # Força download dos binários gn, ninja via cipd
+          python3 gclient.py --version
+          bash update_depot_tools
+          echo "--- Verificando binários ---"
+          which gn
+          gn --version
+          which ninja
+          ninja --version
 
       - name: Configurar gclient
         run: |
-          # Configura o gclient apontando para o src dentro do workspace
-          mkdir -p ${{ github.workspace }}/src
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
-          gclient config --name src https://github.com/brave/brave-browser --unmanaged
-          gclient sync --no-history --shallow --nohooks --jobs 8
+          gclient config \
+            --name=src \
+            --unmanaged \
+            https://github.com/brave/brave-browser
+
+      - name: gclient sync
+        run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          cd ${{ github.workspace }}
+          gclient sync \
+            --no-history \
+            --shallow \
+            --delete_unversioned_trees \
+            --reset \
+            --nohooks \
+            --jobs=8
+
+      - name: gclient runhooks
+        run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          cd ${{ github.workspace }}
+          gclient runhooks
 
       - name: Escrever args.gn
         run: |
@@ -41,25 +83,52 @@ jobs:
           cat > ${{ github.workspace }}/src/out/arm64/args.gn << 'EOF'
           target_os = "android"
           target_cpu = "arm64"
+          android_channel = "stable"
           is_debug = false
           is_official_build = true
+          is_component_build = false
+          symbol_level = 0
+          strip_debug_info = true
           brave_rewards_enabled = false
           brave_wallet_enabled = false
           brave_news_enabled = false
-          safe_browsing_mode = 0
+          brave_sync_v2_enabled = false
+          brave_vpn_enabled = false
+          speedreader_enabled = false
           enable_reporting = false
           enable_crash_reporter = false
+          enable_background_mode = false
+          safe_browsing_mode = 0
           use_official_google_api_keys = false
+          enable_google_now = false
+          enable_remoting = false
+          disable_omaha = true
+          disable_fieldtrial_testing_config = true
+          arm_use_neon = true
+          use_thin_lto = true
           EOF
 
-      - name: Build
+      - name: gn gen
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}/src
           gn gen out/arm64
+
+      - name: Validar search_engines target
+        run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          cd ${{ github.workspace }}/src
+          autoninja -C out/arm64 components/search_engines:search_engines
+
+      - name: Build chrome_public_apk
+        run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          cd ${{ github.workspace }}/src
           autoninja -C out/arm64 chrome_public_apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: searxgo-apk
-          path: src/out/arm64/apks/ChromePublic.apk
+          name: searxgo-arm64-${{ github.sha }}
+          path: ${{ github.workspace }}/src/out/arm64/apks/ChromePublic.apk
+          retention-days: 7
