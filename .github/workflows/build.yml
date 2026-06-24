@@ -39,20 +39,22 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      - name: Setup depot_tools (via tarball oficial)
+      - name: Setup depot_tools (tarball + GN manual)
         run: |
-          # Cria um diretório único
-          DEPOT_DIR="/tmp/depot_tools_$(date +%s)"
+          # Cria diretório temporário único e vazio
+          DEPOT_DIR=$(mktemp -d)
           echo "DEPOT_DIR=$DEPOT_DIR" >> $GITHUB_ENV
-          mkdir -p "$DEPOT_DIR"
 
-          # Baixa o tarball oficial (não contém gn, evita conflitos)
+          # Baixa e extrai o depot_tools oficial
           curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
           unzip -q /tmp/depot_tools.zip -d "$DEPOT_DIR"
 
-          # Baixa o GN manualmente
+          # Remove o wrapper gn (script Python) para evitar conflito
+          rm -f "$DEPOT_DIR"/gn
+
+          # Baixa e extrai o binário GN (substitui o wrapper)
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
-          unzip -q /tmp/gn.zip -d "$DEPOT_DIR"
+          unzip -qo /tmp/gn.zip -d "$DEPOT_DIR"
           chmod +x "$DEPOT_DIR"/gn
 
           # Adiciona ao PATH
