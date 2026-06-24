@@ -41,25 +41,19 @@ jobs:
 
       - name: Setup depot_tools + GN manual
         run: |
-          # 1. Remove qualquer diretório existente
           rm -rf ${{ github.workspace }}/depot_tools
-
-          # 2. Clona depot_tools
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             ${{ github.workspace }}/depot_tools
 
-          # 3. Baixa o GN diretamente do CIPD usando -o para sobrescrever sem prompt
+          # Baixa GN diretamente (URL estável)
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
-          unzip -o -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
+          unzip -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
           chmod +x ${{ github.workspace }}/depot_tools/gn
 
-          # 4. Adiciona depot_tools ao PATH
           echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
-
-          # 5. Verifica se o gn está disponível
-          ./depot_tools/gn --version
+          gn --version
 
       - name: Configurar gclient
         run: |
@@ -67,25 +61,20 @@ jobs:
           cd ${{ github.workspace }}
           gclient config --name src https://github.com/brave/brave-browser --unmanaged
 
-      - name: gclient sync
+      # ========== ALTERAÇÃO PRINCIPAL ==========
+      - name: gclient sync (sem --no-history e --shallow)
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
-          gclient sync \
-            --no-history \
-            --shallow \
-            --delete_unversioned_trees \
-            --reset \
-            --nohooks \
-            --jobs=8
+          gclient sync --delete_unversioned_trees --reset --nohooks --jobs=8
 
-      - name: Verificar ferramentas após sync
+      # DEPURAÇÃO: verificar se o diretório src foi criado
+      - name: Verificar conteúdo de src
         run: |
-          export PATH="${{ github.workspace }}/depot_tools:$PATH"
-          gn --version
-          ninja --version
+          ls -la ${{ github.workspace }}/src || echo "src não existe!"
+          test -f ${{ github.workspace }}/src/.gn && echo ".gn encontrado!" || echo ".gn NÃO encontrado!"
 
-      - name: gclient runhooks
+      - name: gclient runhooks (antes do gn gen)
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
