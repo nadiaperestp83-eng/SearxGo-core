@@ -19,58 +19,32 @@ jobs:
       - name: Install Python 3.11 e dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            software-properties-common
+          sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:deadsnakes/ppa
           sudo apt-get update
-          sudo apt-get install -y \
-            python3.11 \
-            python3.11-distutils \
-            python3.11-venv \
-            build-essential \
-            git \
-            curl \
-            lsb-release \
-            openjdk-17-jdk \
-            lib32stdc++6 \
-            lib32z1 \
-            pkg-config \
-            unzip
+          sudo apt-get install -y python3.11 python3.11-distutils python3.11-venv build-essential git curl lsb-release openjdk-17-jdk lib32stdc++6 lib32z1 pkg-config unzip
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
           sudo update-alternatives --set python3 /usr/bin/python3.11
-          python3 --version
 
-      - name: Clone depot_tools e adiciona ao PATH
+      - name: Clone e Inicialize depot_tools
         run: |
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            ${{ github.workspace }}/depot_tools
+          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git ${{ github.workspace }}/depot_tools
           echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
+          # PASSO CRÍTICO: Inicialização necessária para baixar gn/ninja
+          cd ${{ github.workspace }}/depot_tools
+          ./gclient
+          touch .cipd_bin
 
       - name: Configurar gclient
         run: |
           cd ${{ github.workspace }}
-          gclient config \
-            --name=src \
-            --unmanaged \
-            https://github.com/brave/brave-browser
+          gclient config --name src https://github.com/brave/brave-browser --unmanaged
 
-      - name: gclient sync (baixa código e ferramentas)
+      - name: gclient sync
         run: |
           cd ${{ github.workspace }}
-          gclient sync \
-            --no-history \
-            --shallow \
-            --delete_unversioned_trees \
-            --reset \
-            --nohooks \
-            --jobs=8
-
-      # Após o sync, o gn já deve estar disponível
-      - name: Verificar ferramentas
-        run: |
-          gn --version
-          ninja --version
+          # Adicionado --nohooks para evitar falhas antes do ambiente estar pronto
+          gclient sync --no-history --shallow --delete_unversioned_trees --reset --nohooks --jobs=8
 
       - name: gclient runhooks
         run: |
@@ -83,7 +57,6 @@ jobs:
           cat > ${{ github.workspace }}/src/out/arm64/args.gn << 'EOF'
           target_os = "android"
           target_cpu = "arm64"
-          android_channel = "stable"
           is_debug = false
           is_official_build = true
           is_component_build = false
@@ -108,24 +81,15 @@ jobs:
           use_thin_lto = true
           EOF
 
-      - name: gn gen
+      - name: Build
         run: |
           cd ${{ github.workspace }}/src
           gn gen out/arm64
-
-      - name: Validar search_engines target
-        run: |
-          cd ${{ github.workspace }}/src
-          autoninja -C out/arm64 components/search_engines:search_engines
-
-      - name: Build chrome_public_apk
-        run: |
-          cd ${{ github.workspace }}/src
           autoninja -C out/arm64 chrome_public_apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: searxgo-arm64-${{ github.sha }}
-          path: ${{ github.workspace }}/src/out/arm64/apks/ChromePublic.apk
+          name: searxgo-arm64
+          path: src/out/arm64/apks/ChromePublic.apk
           retention-days: 7
