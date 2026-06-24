@@ -41,25 +41,25 @@ jobs:
 
       - name: Setup depot_tools + GN manual
         run: |
-          # Remove qualquer diretório existente
+          # 1. Remove qualquer diretório existente
           rm -rf ${{ github.workspace }}/depot_tools
 
-          # Clona depot_tools
+          # 2. Clona depot_tools
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             ${{ github.workspace }}/depot_tools
 
-          # Baixa o GN diretamente do CIPD (URL oficial)
+          # 3. Baixa o GN diretamente do CIPD usando -o para sobrescrever sem prompt
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
-          unzip -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
+          unzip -o -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
           chmod +x ${{ github.workspace }}/depot_tools/gn
 
-          # Adiciona depot_tools ao PATH
+          # 4. Adiciona depot_tools ao PATH
           echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
 
-          # Verifica se o gn está disponível
-          gn --version
+          # 5. Verifica se o gn está disponível
+          ./depot_tools/gn --version
 
       - name: Configurar gclient
         run: |
