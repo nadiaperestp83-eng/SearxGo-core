@@ -42,7 +42,6 @@ jobs:
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             $HOME/depot_tools
 
-          # Remove wrapper Python do gn e instala binário real
           rm -f $HOME/depot_tools/gn
           curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
             -o /tmp/gn.zip
@@ -54,63 +53,65 @@ jobs:
           gn --version
           gclient --version
 
-      - name: Clonar brave-browser
+      - name: Clonar brave-browser (raiz com DEPS completo)
         run: |
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          # brave-browser contém o DEPS que puxa Chromium + brave-core
           git clone --depth=1 \
             https://github.com/brave/brave-browser.git \
             $HOME/brave-browser
-          echo "--- Conteúdo de brave-browser ---"
+          echo "--- Conteúdo raiz ---"
           ls -la $HOME/brave-browser/
+          echo "--- DEPS existe? ---"
+          test -f $HOME/brave-browser/DEPS && echo "DEPS OK" || echo "DEPS NAO EXISTE"
 
-      - name: Localizar e patch do arquivo de dependências
+      - name: Patch DEPS — substitui brave-core pelo SearxGo-core
         run: |
           cd $HOME/brave-browser
-          echo "--- Arquivos na raiz ---"
-          ls -la
-          # O brave-browser usa package.json + script init que gera o .gclient
-          # Substituímos a referência ao brave-core pelo nosso fork
-          if [ -f "package.json" ]; then
-            echo "package.json encontrado — fazendo patch"
-            sed -i \
-              's|brave/brave-core|nadiaperestp83-eng/SearxGo-core|g' \
-              package.json
-            cat package.json | grep -i "brave-core\|SearxGo" || true
-          fi
-          if [ -f "DEPS" ]; then
-            echo "DEPS encontrado — fazendo patch"
-            sed -i \
-              's|brave/brave-core|nadiaperestp83-eng/SearxGo-core|g' \
-              DEPS
-          fi
-          # Grava .gclient manualmente apontando para o nosso fork
-          cat > $HOME/.gclient << 'EOF'
+          # Mostra linha original antes do patch
+          grep -n "brave-core\|brave/brave-core" DEPS | head -5 || true
+          # Substitui URL do brave-core pelo fork
+          sed -i \
+            's|https://github.com/brave/brave-core|https://github.com/nadiaperestp83-eng/SearxGo-core|g' \
+            DEPS
+          # Substitui também referência sem https
+          sed -i \
+            's|brave/brave-core@|nadiaperestp83-eng/SearxGo-core@|g' \
+            DEPS
+          # Confirma patch
+          echo "--- Após patch ---"
+          grep -n "SearxGo-core\|brave-core" DEPS | head -5 || true
+
+      - name: Escrever .gclient na raiz do brave-browser
+        run: |
+          cd $HOME/brave-browser
+          # O .gclient deve ficar UM NÍVEL acima do src
+          # brave-browser já tem o script init.py que gera o .gclient
+          # Geramos manualmente para garantir
+          cat > $HOME/brave-browser/.gclient << 'EOF'
           solutions = [
             {
-              "name": "src/brave",
-              "url": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
-              "deps_file": "DEPS",
-              "managed": False,
-              "custom_deps": {},
+              "name"        : "src",
+              "url"         : "https://chromium.googlesource.com/chromium/src.git",
+              "deps_file"   : ".DEPS.git",
+              "managed"     : False,
+              "custom_deps" : {
+                "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
+              },
+              "custom_vars": {},
             },
           ]
           target_os = ["android"]
           EOF
-          echo "--- .gclient gerado ---"
-          cat $HOME/.gclient
+          echo "--- .gclient ---"
+          cat $HOME/brave-browser/.gclient
 
-      - name: npm install no brave-browser
+      - name: gclient sync (Chromium completo + SearxGo-core)
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd $HOME/brave-browser
-          npm install --legacy-peer-deps || true
-
-      - name: gclient sync
-        run: |
-          export PATH="$HOME/depot_tools:$PATH"
-          export DEPOT_TOOLS_UPDATE=0
-          # Roda gclient na home onde está o .gclient
-          cd $HOME
           gclient sync \
             --no-history \
             --shallow \
@@ -121,28 +122,28 @@ jobs:
 
       - name: Verificar estrutura src
         run: |
-          echo "--- Conteúdo de src ---"
-          ls -la $HOME/src/ || echo "src não existe"
-          test -f $HOME/src/.gn \
+          echo "--- src ---"
+          ls -la $HOME/brave-browser/src/ | head -20
+          echo "--- .gn ---"
+          test -f $HOME/brave-browser/src/.gn \
             && echo ".gn ENCONTRADO OK" \
-            || echo ".gn NAO encontrado — pode estar em subdir"
-          find $HOME/src -name ".gn" -maxdepth 3 2>/dev/null || true
+            || (echo ".gn NAO encontrado — abortando" && exit 1)
+          echo "--- brave dentro de src ---"
+          ls -la $HOME/brave-browser/src/brave/ | head -10 || echo "brave NAO existe"
+          echo "--- build/config/siso ---"
+          ls $HOME/brave-browser/src/build/config/siso/ 2>/dev/null || echo "siso NAO existe"
 
       - name: gclient runhooks
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
-          cd $HOME
+          cd $HOME/brave-browser
           gclient runhooks
 
       - name: Escrever args.gn
         run: |
-          # Detecta onde está o src com o .gn
-          SRC_DIR=$(find $HOME -name ".gn" -maxdepth 5 2>/dev/null | head -1 | xargs dirname)
-          echo "SRC_DIR=$SRC_DIR" >> $GITHUB_ENV
-          echo "src encontrado em: $SRC_DIR"
-          mkdir -p "$SRC_DIR/out/arm64"
-          cat > "$SRC_DIR/out/arm64/args.gn" << 'EOF'
+          mkdir -p $HOME/brave-browser/src/out/arm64
+          cat > $HOME/brave-browser/src/out/arm64/args.gn << 'EOF'
           target_os = "android"
           target_cpu = "arm64"
           android_channel = "stable"
@@ -174,26 +175,26 @@ jobs:
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
-          cd "$SRC_DIR"
+          cd $HOME/brave-browser/src
           gn gen out/arm64
 
       - name: Validar search_engines target
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
-          cd "$SRC_DIR"
+          cd $HOME/brave-browser/src
           autoninja -C out/arm64 components/search_engines:search_engines
 
       - name: Build chrome_public_apk
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
-          cd "$SRC_DIR"
+          cd $HOME/brave-browser/src
           autoninja -C out/arm64 chrome_public_apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: searxgo-arm64-${{ github.sha }}
-          path: ${{ env.SRC_DIR }}/out/arm64/apks/ChromePublic.apk
+          path: $HOME/brave-browser/src/out/arm64/apks/ChromePublic.apk
           retention-days: 7
