@@ -11,13 +11,6 @@
 
 namespace TemplateURLPrepopulateData {
 
-// ****************************************************************************
-// IMPORTANT! Make sure to bump the value of kBraveCurrentDataVersion in
-// brave_prepopulated_engines.h if you add, remove, or make changes
-// to the engines in here or to mappings in
-// chromium_src/components/regional_capabilities/regional_capabilities_utils.cc.
-// ****************************************************************************
-
 namespace {
 
 PrepopulatedEngine MakeBravePrepopulatedEngine(
@@ -93,6 +86,24 @@ PrepopulatedEngine ModifyEngineParams(const PrepopulatedEngine& engine,
 }
 
 }  // namespace
+
+// ---------------------------------------------------------------------------
+// SEARXGO — Motor principal. URL configurada em runtime via prefs.
+// LINT.IfChange
+const PrepopulatedEngine searxgo = MakeBravePrepopulatedEngine(
+    u"SearxGo",
+    u":s",
+    "https://raw.githubusercontent.com/searxng/searxng/master/searx/static/themes/simple/img/favicon.png",
+    "IDR_SEARCH_ENGINE_OTHER",
+    // A URL abaixo é o placeholder. Em runtime,
+    // brave_search_engines_pref_names.h injeta a URL real das prefs.
+    "http://localhost/search?q={searchTerms}&format=json",
+    "UTF-8",
+    /*suggest_url=*/nullptr,
+    SEARCH_ENGINE_OTHER,
+    PREPOPULATED_ENGINE_ID_SEARXGO);
+// LINT.ThenChange(//brave/components/search_engines/brave_prepopulated_engines.h:kBraveCurrentDataVersion)
+// ---------------------------------------------------------------------------
 
 // LINT.IfChange
 const PrepopulatedEngine duckduckgo = MakeBravePrepopulatedEngine(
@@ -259,15 +270,13 @@ const PrepopulatedEngine brave_bing = ModifyEngineParams(
 const PrepopulatedEngine brave_yahoo_jp = ModifyEngineParams(
     yahoo_jp,
     u"Yahoo! JAPAN",
-    nullptr,  // keyword
-    // search url
+    nullptr,
     "https://search.yahoo.co.jp/search?p={searchTerms}&ei={inputEncoding}&fr="
 #if BUILDFLAG(IS_ANDROID)
     "brave-mobile_ext",
 #else
     "brave-desktop_ext",
 #endif
-    // suggest url
     "https://search.yahooapis.jp/AssistSearchService/V2/"
     "webassistSearch?p={searchTerms}&appid="
     "dj00aiZpPXVyZmc2WDgzWnA5SSZzPWNvbnN1bWVyc2VjcmV0Jng9MTE-"
@@ -277,7 +286,6 @@ const PrepopulatedEngine brave_yahoo_jp = ModifyEngineParams(
 #else
     "brave-desktop_ext",
 #endif
-    // image url
     "https://search.yahoo.co.jp/image/"
     "search?p={searchTerms}&ei={inputEncoding}&fr="
 #if BUILDFLAG(IS_ANDROID)
