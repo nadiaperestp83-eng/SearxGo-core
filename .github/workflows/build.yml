@@ -39,29 +39,37 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      - name: Setup depot_tools
+      - name: Setup depot_tools + GN manual
         run: |
-          # Remove qualquer diretório existente para evitar conflitos
+          # Remove qualquer diretório existente
           rm -rf ${{ github.workspace }}/depot_tools
-          # Clona o depot_tools
+
+          # Clona depot_tools
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             ${{ github.workspace }}/depot_tools
-          # Adiciona ao PATH
+
+          # Baixa o GN diretamente do CIPD (URL oficial)
+          curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
+          unzip -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
+          chmod +x ${{ github.workspace }}/depot_tools/gn
+
+          # Adiciona depot_tools ao PATH
           echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
-          # Executa o bootstrap oficial (baixa gn, ninja, etc.)
-          cd ${{ github.workspace }}/depot_tools
-          ./ensure_bootstrap
-          # Verifica se o gn foi instalado
-          gn --version || echo "gn será baixado pelo gclient sync"
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
+
+          # Verifica se o gn está disponível
+          gn --version
 
       - name: Configurar gclient
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient config --name src https://github.com/brave/brave-browser --unmanaged
 
       - name: gclient sync
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient sync \
             --no-history \
@@ -73,11 +81,13 @@ jobs:
 
       - name: Verificar ferramentas após sync
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           gn --version
           ninja --version
 
       - name: gclient runhooks
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient runhooks
 
@@ -114,11 +124,13 @@ jobs:
 
       - name: gn gen
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}/src
           gn gen out/arm64
 
       - name: Build chrome_public_apk
         run: |
+          export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}/src
           autoninja -C out/arm64 chrome_public_apk
 
