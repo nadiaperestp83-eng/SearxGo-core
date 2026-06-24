@@ -12,7 +12,7 @@ jobs:
 
     steps:
       # ============================================================
-      # 1. LIBERAR ESPAÇO EM DISCO (ANTES DE QUALQUER DOWNLOAD)
+      # 1. LIBERAR ESPAÇO EM DISCO
       # ============================================================
       - name: Free disk space
         run: |
@@ -71,19 +71,22 @@ jobs:
           python3 --version
 
       # ============================================================
-      # 3. DEPOT_TOOLS + GN (sem git clone, para evitar prompts)
+      # 3. DEPOT_TOOLS COM GIT CLONE + YES | PARA EVITAR PROMPTS
       # ============================================================
       - name: Setup depot_tools e GN binário
         run: |
-          # Usamos tarball para evitar interação com git
           rm -rf $HOME/depot_tools
-          curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
-          unzip -q /tmp/depot_tools.zip -d $HOME
+          yes | git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            $HOME/depot_tools
+
+          # Remove o wrapper gn (script Python) e baixa o binário
           rm -f $HOME/depot_tools/gn
           curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
             -o /tmp/gn.zip
           unzip -qo /tmp/gn.zip -d $HOME/depot_tools
           chmod +x $HOME/depot_tools/gn
+
           echo "$HOME/depot_tools" >> $GITHUB_PATH
           export PATH="$HOME/depot_tools:$PATH"
           gn --version
@@ -151,7 +154,7 @@ jobs:
           echo "BUILD_DIR=$HOME/searxgo-build" >> $GITHUB_ENV
 
       # ============================================================
-      # 6. SYNC (com menos jobs e sem --no-history para evitar erros)
+      # 6. SYNC COM PARALELISMO REDUZIDO
       # ============================================================
       - name: gclient sync — Chromium + SearxGo-core
         run: |
@@ -164,10 +167,10 @@ jobs:
             --delete_unversioned_trees \
             --reset \
             --nohooks \
-            --jobs=4   # Menos paralelismo = menos arquivos temporários
+            --jobs=4
 
       # ============================================================
-      # 7. VERIFICAÇÃO E ESPAÇO DISPONÍVEL
+      # 7. VERIFICAÇÃO E ESPAÇO
       # ============================================================
       - name: Verificar estrutura src e espaço
         run: |
@@ -190,9 +193,9 @@ jobs:
           gclient runhooks
 
       # ============================================================
-      # 8. CONFIGURAR args.gn (com opções para reduzir espaço)
+      # 8. args.gn OTIMIZADO PARA ESPAÇO
       # ============================================================
-      - name: Escrever args.gn (otimizado para espaço)
+      - name: Escrever args.gn
         run: |
           mkdir -p $HOME/searxgo-build/src/out/arm64
           cat > $HOME/searxgo-build/src/out/arm64/args.gn << 'EOF'
@@ -223,14 +226,13 @@ jobs:
           disable_fieldtrial_testing_config = true
           arm_use_neon = true
           use_thin_lto = true
-          # Reduz ainda mais o espaço:
           is_cfi = false
           use_cxx_rtti = false
           use_custom_libcxx = false
           EOF
 
       # ============================================================
-      # 9. BUILD COM NINJA LIMITADO A 2 JOBS (para evitar pico de espaço)
+      # 9. BUILD COM NINJA LIMITADO (para evitar pico de espaço)
       # ============================================================
       - name: gn gen
         run: |
@@ -244,11 +246,10 @@ jobs:
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd $HOME/searxgo-build/src
-          # Usamos autoninja com -j 4 para limitar processos paralelos
           autoninja -C out/arm64 -j 4 chrome_public_apk
 
       # ============================================================
-      # 10. UPLOAD
+      # 10. UPLOAD APK
       # ============================================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
