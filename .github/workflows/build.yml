@@ -39,18 +39,17 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      # ========== NOVA ETAPA: depot_tools em /tmp ==========
-      - name: Setup depot_tools (em /tmp)
+      # ========== NOVA ETAPA: depot_tools via tarball oficial ==========
+      - name: Setup depot_tools (sem git clone)
         run: |
-          # Remove qualquer resíduo (por segurança)
-          rm -rf /tmp/depot_tools
+          # Remove qualquer resíduo
+          sudo rm -rf /tmp/depot_tools /tmp/depot_tools.zip
 
-          # Clona para /tmp
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            /tmp/depot_tools
+          # Baixa o tarball oficial do depot_tools
+          curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
+          unzip -q /tmp/depot_tools.zip -d /tmp
 
-          # Baixa GN manualmente
+          # Baixa o GN mais recente (para garantir compatibilidade)
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
           unzip -q /tmp/gn.zip -d /tmp/depot_tools
           chmod +x /tmp/depot_tools/gn
