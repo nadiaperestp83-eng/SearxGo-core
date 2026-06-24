@@ -16,13 +16,18 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install dependencies
+      - name: Install Python 3.11 e dependências
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            software-properties-common
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3.11 \
+            python3.11-distutils \
+            python3.11-venv \
             build-essential \
-            python3 \
-            python3-pip \
             git \
             curl \
             lsb-release \
@@ -30,6 +35,10 @@ jobs:
             lib32stdc++6 \
             lib32z1 \
             pkg-config
+          # Força python3 apontar para 3.11
+          sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+          sudo update-alternatives --set python3 /usr/bin/python3.11
+          python3 --version
 
       - name: Clone depot_tools
         run: |
@@ -40,9 +49,8 @@ jobs:
       - name: Bootstrap depot_tools e verificar gn
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}/depot_tools
-          # Força download dos binários gn, ninja via cipd
-          python3 gclient.py --version
           bash update_depot_tools
           echo "--- Verificando binários ---"
           which gn
@@ -53,6 +61,7 @@ jobs:
       - name: Configurar gclient
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}
           gclient config \
             --name=src \
@@ -62,6 +71,7 @@ jobs:
       - name: gclient sync
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}
           gclient sync \
             --no-history \
@@ -74,6 +84,7 @@ jobs:
       - name: gclient runhooks
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}
           gclient runhooks
 
@@ -111,18 +122,21 @@ jobs:
       - name: gn gen
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}/src
           gn gen out/arm64
 
       - name: Validar search_engines target
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}/src
           autoninja -C out/arm64 components/search_engines:search_engines
 
       - name: Build chrome_public_apk
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}/src
           autoninja -C out/arm64 chrome_public_apk
 
