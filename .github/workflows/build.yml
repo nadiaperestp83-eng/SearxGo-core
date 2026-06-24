@@ -59,8 +59,6 @@ jobs:
             https://github.com/brave/brave-browser.git \
             $HOME/brave-browser
           echo "=== package.json — versão chromium ==="
-          # Extrai a versão exata do Chromium que o brave-browser usa
-          node -e "const p=require('$HOME/brave-browser/package.json'); console.log(p.config && p.config.projects && p.config.projects.chrome && p.config.projects.chrome.tag || 'NAO ENCONTRADO')" || true
           cat $HOME/brave-browser/package.json | python3 -c "
           import sys, json
           d = json.load(sys.stdin)
@@ -74,11 +72,9 @@ jobs:
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
 
-          # Cria diretório de trabalho fixo
           mkdir -p $HOME/searxgo-build
           cd $HOME/searxgo-build
 
-          # Lê a tag do Chromium do package.json do brave-browser
           CHROMIUM_TAG=$(python3 -c "
           import json
           d = json.load(open('$HOME/brave-browser/package.json'))
@@ -89,20 +85,6 @@ jobs:
 
           echo "CHROMIUM_TAG detectado: $CHROMIUM_TAG"
 
-          # Lê ref do brave-core (branch/commit) do package.json
-          BRAVE_CORE_REF=$(python3 -c "
-          import json
-          d = json.load(open('$HOME/brave-browser/package.json'))
-          cfg = d.get('config', {})
-          ref = cfg.get('projects', {}).get('brave-core', {}).get('ref', 'master')
-          print(ref)
-          " 2>/dev/null)
-
-          echo "BRAVE_CORE_REF detectado: $BRAVE_CORE_REF"
-
-          # Escreve .gclient manualmente com estrutura correta
-          # src = Chromium upstream
-          # src/brave = SEU fork SearxGo-core
           cat > $HOME/searxgo-build/.gclient << GCLIENT
           solutions = [
             {
@@ -147,9 +129,6 @@ jobs:
             || (echo ".gn NAO encontrado — abortando" && exit 1)
           echo "=== src/brave ==="
           ls $HOME/searxgo-build/src/brave/ | head -10 || echo "brave NAO existe"
-          echo "=== build/config/siso ==="
-          ls $HOME/searxgo-build/src/build/config/siso/ 2>/dev/null \
-            || echo "siso NAO existe ainda"
 
       - name: gclient runhooks
         run: |
@@ -158,7 +137,7 @@ jobs:
           cd $HOME/searxgo-build
           gclient runhooks
 
-      - name: Escrever args.gn
+      - name: Escrever args.gn (CORRIGIDO)
         run: |
           mkdir -p $HOME/searxgo-build/src/out/arm64
           cat > $HOME/searxgo-build/src/out/arm64/args.gn << 'EOF'
@@ -169,7 +148,10 @@ jobs:
           is_official_build = true
           is_component_build = false
           symbol_level = 0
-          strip_debug_info = true
+          # Removido strip_debug_info = true → conflito com allowlist
+          enable_resource_allowlist_generation = false
+          enable_junit_tests = false
+          enable_java_templates = false
           brave_rewards_enabled = false
           brave_wallet_enabled = false
           brave_news_enabled = false
