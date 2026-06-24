@@ -1,22 +1,62 @@
-# Copyright (c) 2021 The Brave Authors. All rights reserved.
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at https://mozilla.org/MPL/2.0/.
+# Copyright 2024 The Chromium Authors / SearxGo Authors.
+# Use of this source code is governed by a BSD-style license.
 
-group("search_engines") {
-  deps = [ "//components/search_engines" ]
-}
+import("//build/config/features.gni")
+import("//build/config/android/rules.gni")
 
-source_set("unit_tests") {
-  testonly = true
-
-  sources = [ "brave_prepopulated_engines_unittest.cc" ]
+source_set("search_engines") {
+  sources = [
+    "keyword_table.cc",
+    "keyword_table.h",
+    "search_engine_type.h",
+    "search_engines_pref_names.h",
+    "search_engines_switches.cc",
+    "search_engines_switches.h",
+    "search_host_to_urls_map.cc",
+    "search_host_to_urls_map.h",
+    "search_terms_data.cc",
+    "search_terms_data.h",
+    "template_url.cc",
+    "template_url.h",
+    "template_url_data.cc",
+    "template_url_data.h",
+    "template_url_data_util.cc",
+    "template_url_data_util.h",
+    "template_url_fetcher.cc",
+    "template_url_fetcher.h",
+    "template_url_prepopulate_data.cc",
+    "template_url_prepopulate_data.h",
+    "template_url_service.cc",
+    "template_url_service.h",
+    "template_url_service_client.h",
+    "template_url_service_observer.h",
+    # SearxGo custom provider
+    "searxgo_provider.cc",
+    "searxgo_provider.h",
+  ]
 
   deps = [
-    "//brave/components/search_engines",
-    "//components/search_engines",
-    "//components/search_engines:test_support",
-    "//testing/gtest",
+    "//base",
+    "//components/database_utils",
+    "//components/google/core/common",
+    "//components/infobars/core",
+    "//components/keyed_service/core",
+    "//components/omnibox/common",
+    "//components/pref_registry",
+    "//components/prefs",
+    "//components/url_formatter",
+    "//components/variations",
+    "//components/webdata/common",
+    "//net",
+    "//sql",
+    "//third_party/metrics_proto",
+    "//ui/base",
+    "//url",
   ]
-  configs += [ "//build/config/compiler:wexit_time_destructors" ]
+
+  # Expõe a URL padrão do SearXNG via define de compilação
+  # Sobrescreva nos gn args: searxgo_default_url = "https://search.example.com"
+  if (defined(searxgo_default_url) && searxgo_default_url != "") {
+    defines = [ "SEARXGO_DEFAULT_URL=\"${searxgo_default_url}\"" ]
+  }
 }
