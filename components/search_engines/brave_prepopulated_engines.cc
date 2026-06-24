@@ -88,15 +88,15 @@ PrepopulatedEngine ModifyEngineParams(const PrepopulatedEngine& engine,
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// SEARXGO — Motor principal. URL configurada em runtime via prefs.
+// SEARXGO — Default search engine. URL configurada via prefs em runtime.
+// A URL abaixo é o placeholder compilado. O valor real vem de
+// brave_search_engines_pref_names.h → kSearxGoEndpointURL lido em runtime.
 // LINT.IfChange
 const PrepopulatedEngine searxgo = MakeBravePrepopulatedEngine(
     u"SearxGo",
     u":s",
-    "https://raw.githubusercontent.com/searxng/searxng/master/searx/static/themes/simple/img/favicon.png",
+    "https://searxng.org/favicon.ico",
     "IDR_SEARCH_ENGINE_OTHER",
-    // A URL abaixo é o placeholder. Em runtime,
-    // brave_search_engines_pref_names.h injeta a URL real das prefs.
     "http://localhost/search?q={searchTerms}&format=json",
     "UTF-8",
     /*suggest_url=*/nullptr,
