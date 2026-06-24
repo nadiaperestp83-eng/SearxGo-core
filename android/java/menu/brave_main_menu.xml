@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Navegação core -->
+    <item
+        android:id="@+id/new_tab_menu_id"
+        android:title="@string/menu_new_tab"
+        android:icon="@drawable/new_tab_icon"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/new_incognito_tab_menu_id"
+        android:title="@string/menu_new_incognito_tab"
+        android:icon="@drawable/incognito_icon"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/all_bookmarks_menu_id"
+        android:title="@string/menu_bookmarks"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/recent_tabs_menu_id"
+        android:title="@string/menu_recent_tabs"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/downloads_menu_id"
+        android:title="@string/menu_downloads"
+        android:showAsAction="never" />
+
+    <!-- Proteção (DDG-style shields — mantido conforme solicitado) -->
+    <item
+        android:id="@+id/brave_shields_id"
+        android:title="@string/brave_shields"
+        android:showAsAction="never" />
+
+    <!-- Página -->
+    <item
+        android:id="@+id/find_in_page_id"
+        android:title="@string/menu_find_in_page"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/add_to_homescreen_id"
+        android:title="@string/menu_add_to_homescreen"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/request_desktop_site_id"
+        android:title="@string/menu_request_desktop_site"
+        android:showAsAction="never" />
+
+    <!-- Configurações -->
+    <item
+        android:id="@+id/preferences_id"
+        android:title="@string/menu_settings"
+        android:showAsAction="never" />
+
+    <item
+        android:id="@+id/help_id"
+        android:title="@string/menu_help"
+        android:showAsAction="never" />
+
+    <!-- REMOVIDOS: brave_rewards_id, brave_wallet_id, brave_news_id,
+         brave_vpn_id, brave_leo_ai_id — não existem neste build -->
+
+</menu>
