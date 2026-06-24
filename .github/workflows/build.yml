@@ -34,7 +34,8 @@ jobs:
             openjdk-17-jdk \
             lib32stdc++6 \
             lib32z1 \
-            pkg-config
+            pkg-config \
+            unzip
           # Força python3 apontar para 3.11
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
           sudo update-alternatives --set python3 /usr/bin/python3.11
@@ -46,16 +47,16 @@ jobs:
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             ${{ github.workspace }}/depot_tools
 
-      - name: Bootstrap depot_tools e verificar gn
+      # ========== CORREÇÃO PRINCIPAL ==========
+      - name: Inicializar depot_tools (bootstrap)
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
           cd ${{ github.workspace }}/depot_tools
-          bash update_depot_tools
+          # O script ensure_bootstrap cria o arquivo python3_bin_reldir.txt
+          ./ensure_bootstrap
           echo "--- Verificando binários ---"
-          which gn
           gn --version
-          which ninja
           ninja --version
 
       - name: Configurar gclient
