@@ -39,19 +39,18 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
-      - name: Setup depot_tools (diretório único)
+      - name: Setup depot_tools (via tarball oficial)
         run: |
-          # Cria um diretório com nome baseado no timestamp para evitar conflitos
+          # Cria um diretório único
           DEPOT_DIR="/tmp/depot_tools_$(date +%s)"
           echo "DEPOT_DIR=$DEPOT_DIR" >> $GITHUB_ENV
           mkdir -p "$DEPOT_DIR"
 
-          # Clona o depot_tools
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            "$DEPOT_DIR"
+          # Baixa o tarball oficial (não contém gn, evita conflitos)
+          curl -s https://storage.googleapis.com/chrome-infra/depot_tools.zip -o /tmp/depot_tools.zip
+          unzip -q /tmp/depot_tools.zip -d "$DEPOT_DIR"
 
-          # Baixa o GN manualmente (caso o bootstrap falhe)
+          # Baixa o GN manualmente
           curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -o /tmp/gn.zip
           unzip -q /tmp/gn.zip -d "$DEPOT_DIR"
           chmod +x "$DEPOT_DIR"/gn
@@ -60,7 +59,7 @@ jobs:
           echo "$DEPOT_DIR" >> $GITHUB_PATH
           export PATH="$DEPOT_DIR:$PATH"
           gn --version
-          which gclient  # Verifica se o gclient está disponível
+          which gclient
 
       - name: Configurar gclient
         run: |
