@@ -39,9 +39,18 @@ jobs:
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
 
+      # ========== ETAPA REVISADA ==========
       - name: Setup depot_tools + GN manual
         run: |
-          rm -rf ${{ github.workspace }}/depot_tools
+          # Remove com sudo para garantir
+          sudo rm -rf ${{ github.workspace }}/depot_tools
+          # Verifica se foi removido
+          if [ -d ${{ github.workspace }}/depot_tools ]; then
+            echo "ERRO: diretório depot_tools ainda existe após remoção"
+            exit 1
+          fi
+
+          # Clona o depot_tools
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             ${{ github.workspace }}/depot_tools
@@ -51,6 +60,7 @@ jobs:
           unzip -q /tmp/gn.zip -d ${{ github.workspace }}/depot_tools
           chmod +x ${{ github.workspace }}/depot_tools/gn
 
+          # Adiciona ao PATH
           echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
           gn --version
@@ -61,14 +71,12 @@ jobs:
           cd ${{ github.workspace }}
           gclient config --name src https://github.com/brave/brave-browser --unmanaged
 
-      # ========== ALTERAÇÃO PRINCIPAL ==========
       - name: gclient sync (sem --no-history e --shallow)
         run: |
           export PATH="${{ github.workspace }}/depot_tools:$PATH"
           cd ${{ github.workspace }}
           gclient sync --delete_unversioned_trees --reset --nohooks --jobs=8
 
-      # DEPURAÇÃO: verificar se o diretório src foi criado
       - name: Verificar conteúdo de src
         run: |
           ls -la ${{ github.workspace }}/src || echo "src não existe!"
