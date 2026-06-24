@@ -1,0 +1,56 @@
+# .github/workflows/build.yml
+name: SearxGo Android Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install depot_tools
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          echo "$(pwd)/depot_tools" >> $GITHUB_PATH
+
+      - name: Configure gclient
+        run: |
+          gclient config https://github.com/SEU_USER/brave-core --name=src/brave
+          gclient sync --no-history --shallow
+
+      - name: GN Args (arm64, produção, sem telemetria)
+        run: |
+          cd src
+          gn gen out/arm64 --args='
+            target_os="android"
+            target_cpu="arm64"
+            is_debug=false
+            is_official_build=true
+            brave_rewards_enabled=false
+            brave_wallet_enabled=false
+            brave_news_enabled=false
+            safe_browsing_mode=0
+            enable_reporting=false
+            enable_crash_reporter=false
+            use_official_google_api_keys=false
+            enable_remoting=false
+            disable_fieldtrial_testing_config=true
+          '
+
+      - name: Build
+        run: |
+          cd src
+          autoninja -C out/arm64 chrome_public_apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: searxgo-arm64
+          path: src/out/arm64/apks/ChromePublic.apk
