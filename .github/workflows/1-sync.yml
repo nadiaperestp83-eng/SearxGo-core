@@ -21,26 +21,43 @@ jobs:
       sync_done: ${{ steps.mark.outputs.sync_done }}
 
     steps:
-      - name: Free disk space agressivo
+      # Liberação agressiva de espaço (remove tudo que não é essencial)
+      - name: Free disk space (extremo)
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/share/swift /opt/microsoft /usr/local/share/boost /usr/lib/jvm /usr/share/java /usr/local/julia* /opt/pipx /opt/az /usr/share/az* /usr/share/maven /usr/share/gradle /usr/share/texlive /imagegeneration /usr/share/miniconda /usr/local/go /usr/share/rust /home/runner/.cargo /home/runner/.rustup /opt/hostedtoolcache/*
-          sudo apt-get remove -y azure-cli google-cloud-cli microsoft-edge-stable firefox mono-complete powershell || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+            /usr/share/swift /opt/microsoft /usr/local/share/boost \
+            /usr/lib/jvm /usr/share/java /usr/local/julia* /opt/pipx \
+            /opt/az /usr/share/az* /usr/share/maven /usr/share/gradle \
+            /usr/share/texlive /imagegeneration /usr/share/miniconda \
+            /usr/local/go /usr/share/rust /home/runner/.cargo \
+            /home/runner/.rustup /opt/hostedtoolcache/*
+          sudo apt-get remove -y azure-cli google-cloud-cli microsoft-edge-stable \
+            firefox mono-complete powershell || true
           sudo apt-get autoremove -y && sudo apt-get clean
           docker system prune -af 2>/dev/null || true
+          sudo rm -rf /home/runner/.cache/*
+          sudo rm -rf /home/runner/.local/share/Trash/*
+          df -h /
 
-      - name: Install Python e dependências mínimas
+      # Instala apenas Python 3.11 e dependências mínimas
+      - name: Install Python e zstd
         run: |
-          sudo apt-get update && sudo apt-get install -y python3.11 build-essential git curl lsb-release zstd
+          sudo apt-get update
+          sudo apt-get install -y python3.11 build-essential git curl lsb-release zstd
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
-      - name: Setup depot_tools e GN binário
+      # Depot_tools + GN (apenas o necessário)
+      - name: Setup depot_tools e GN
         run: |
           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           rm -f $HOME/depot_tools/gn
           curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" -o /tmp/gn.zip
           unzip -qo /tmp/gn.zip -d $HOME/depot_tools && chmod +x $HOME/depot_tools/gn
           echo "$HOME/depot_tools" >> $GITHUB_PATH
+          export PATH="$HOME/depot_tools:$PATH"
+          gn --version
 
+      # Obtém a tag do Chromium usada pelo Brave
       - name: Obter tag Chromium
         run: |
           git clone --depth=1 https://github.com/brave/brave-browser.git $HOME/brave-browser
@@ -48,6 +65,7 @@ jobs:
           echo "CHROMIUM_TAG=$TAG" >> $GITHUB_ENV
           rm -rf $HOME/brave-browser
 
+      # .gclient com exclusões máximas (evita baixar depots gigantes)
       - name: Escrever .gclient minimalista
         run: |
           mkdir -p $HOME/searxgo-build
@@ -58,44 +76,114 @@ jobs:
             "managed": False,
             "custom_deps": {
               "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
-              "src/third_party/blink/web_tests": None, "src/third_party/node": None,
-              "src/third_party/nodejs": None, "src/third_party/rust": None,
-              "src/third_party/perfetto": None, "src/chrome/test/data": None,
-              "src/content/test/data": None, "src/third_party/pdfium": None,
-              "src/chrome/browser/resources/pdf": None, "src/third_party/widevine": None,
-              "src/third_party/llvm-build": None, "src/tools/perf": None,
-              "src/third_party/catapult": None, "src/third_party/angle": None,
+              "src/third_party/blink/web_tests": None,
+              "src/third_party/node": None,
+              "src/third_party/nodejs": None,
+              "src/third_party/rust": None,
+              "src/third_party/perfetto": None,
+              "src/chrome/test/data": None,
+              "src/content/test/data": None,
+              "src/third_party/pdfium": None,
+              "src/chrome/browser/resources/pdf": None,
+              "src/third_party/widevine": None,
+              "src/third_party/llvm-build": None,
+              "src/tools/perf": None,
+              "src/third_party/catapult": None,
+              "src/third_party/angle": None,
+              "src/third_party/depot_tools": None,   # <-- EVITA DUPLICAR DEPOT_TOOLS
+              "src/third_party/android_tools": None,
+              "src/third_party/rust-toolchain": None,
+              "src/third_party/dawn": None,
+              "src/third_party/breakpad": None,
+              "src/third_party/crashpad": None,
             },
             "custom_vars": {
-              "checkout_android": True, "checkout_android_native_support": False,
-              "checkout_nacl": False, "checkout_libaom": False,
-              "checkout_openxr": False, "checkout_aemu_source": False,
+              "checkout_android": True,
+              "checkout_android_native_support": False,
+              "checkout_nacl": False,
+              "checkout_libaom": False,
+              "checkout_openxr": False,
+              "checkout_aemu_source": False,
             },
           }]
           GCLIENT
+          cat $HOME/searxgo-build/.gclient
 
-      - name: gclient sync
+      # Sync com retry e jobs reduzidos
+      - name: gclient sync (com retry)
         run: |
           export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          export GIT_HTTP_MAX_REQUESTS=2
+          export GIT_CURL_VERBOSE=0
           cd $HOME/searxgo-build
-          gclient sync --no-history --shallow --delete_unversioned_trees --reset --nohooks --jobs=4
 
-      - name: Comprimir src (Limpeza Extrema)
+          retry_sync() {
+            for i in 1 2 3; do
+              echo "Tentativa $i de gclient sync..."
+              if gclient sync \
+                --no-history \
+                --shallow \
+                --delete_unversioned_trees \
+                --reset \
+                --nohooks \
+                --jobs=2; then
+                echo "Sync concluído com sucesso."
+                return 0
+              fi
+              echo "Falha na tentativa $i. Aguardando $((10 * i))s..."
+              sleep $((10 * i))
+            done
+            echo "Todas as tentativas falharam."
+            return 1
+          }
+          retry_sync
+
+      # Verifica se .gn existe e mostra espaço livre
+      - name: Verificar .gn e espaço
+        run: |
+          test -f $HOME/searxgo-build/src/.gn || (echo ".gn não encontrado" && exit 1)
+          df -h /
+
+      # Remoção manual de diretórios que ainda possam estar ocupando espaço
+      - name: Limpeza pós-sync
+        run: |
+          cd $HOME/searxgo-build/src
+          rm -rf third_party/llvm-build third_party/android_tools third_party/rust-toolchain \
+                 third_party/dawn third_party/angle third_party/catapult \
+                 third_party/breakpad third_party/crashpad \
+                 chrome/test/data content/test/data tools/perf out
+          df -h /
+
+      # Compressão com baixo consumo de RAM e exclusões extras
+      - name: Comprimir src
         run: |
           cd $HOME/searxgo-build
-          tar --exclude=src/.git \
-              --exclude=src/third_party/blink/web_tests \
-              --exclude=src/third_party/node \
-              --exclude=src/chrome/test \
-              --exclude=src/content/test \
-              --exclude=src/third_party/catapult \
-              --exclude=src/tools/perf \
-              --exclude='src/**/*.pyc' \
-              --exclude='src/**/__pycache__' \
-              --exclude=src/out \
-              -I 'zstd -T2 -19' -cf /tmp/searxgo-src.tar.zst src/
+          tar \
+            --exclude=src/.git \
+            --exclude=src/out \
+            --exclude=src/third_party/blink/web_tests \
+            --exclude=src/third_party/node \
+            --exclude=src/third_party/nodejs \
+            --exclude=src/third_party/rust \
+            --exclude=src/third_party/perfetto \
+            --exclude=src/chrome/test/data \
+            --exclude=src/content/test/data \
+            --exclude=src/third_party/pdfium \
+            --exclude=src/third_party/llvm-build \
+            --exclude=src/third_party/android_tools \
+            --exclude=src/third_party/rust-toolchain \
+            --exclude=src/third_party/dawn \
+            --exclude=src/third_party/angle \
+            --exclude=src/third_party/catapult \
+            --exclude='src/**/*.pyc' \
+            --exclude='src/**/__pycache__' \
+            -I 'zstd -T2 -3 --memory=1024' \
+            -cf /tmp/searxgo-src.tar.zst \
+            src/
           ls -lh /tmp/searxgo-src.tar.zst
 
+      # Upload do artefato
       - name: Upload src artifact
         uses: actions/upload-artifact@v4
         with:
@@ -103,6 +191,7 @@ jobs:
           path: /tmp/searxgo-src.tar.zst
           retention-days: 3
 
+      # Sinaliza conclusão
       - name: Marcar sync concluído
         id: mark
         run: echo "sync_done=true" >> $GITHUB_OUTPUT
