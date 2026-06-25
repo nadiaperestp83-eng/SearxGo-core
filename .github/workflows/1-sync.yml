@@ -1,0 +1,122 @@
+name: 1 - Sync Sources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+            /usr/share/swift /opt/microsoft /usr/local/share/boost \
+            /usr/lib/jvm /usr/share/java
+          sudo apt-get clean
+          df -h /
+
+      - name: Install Python 3.11
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3.11 python3.11-distutils python3.11-venv \
+            build-essential git curl lsb-release \
+            lib32stdc++6 lib32z1 pkg-config unzip nodejs npm
+          sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+          sudo update-alternatives --set python3 /usr/bin/python3.11
+          python3 --version
+
+      - name: Setup depot_tools e GN
+        run: |
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            $HOME/depot_tools
+          rm -f $HOME/depot_tools/gn
+          curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
+            -o /tmp/gn.zip
+          unzip -qo /tmp/gn.zip -d $HOME/depot_tools
+          chmod +x $HOME/depot_tools/gn
+          echo "$HOME/depot_tools" >> $GITHUB_PATH
+
+      - name: Clonar brave-browser e extrair versão Chromium
+        run: |
+          export PATH="$HOME/depot_tools:$PATH"
+          git clone --depth=1 \
+            https://github.com/brave/brave-browser.git \
+            $HOME/brave-browser
+          CHROMIUM_TAG=$(python3 -c "
+          import json
+          d = json.load(open('$HOME/brave-browser/package.json'))
+          tag = d.get('config',{}).get('projects',{}).get('chrome',{}).get('tag','')
+          print(tag)
+          ")
+          echo "CHROMIUM_TAG=$CHROMIUM_TAG" >> $GITHUB_ENV
+          echo "Tag detectada: $CHROMIUM_TAG"
+
+      - name: Escrever .gclient
+        run: |
+          mkdir -p $HOME/searxgo-build
+          cat > $HOME/searxgo-build/.gclient << GCLIENT
+          solutions = [
+            {
+              "name": "src",
+              "url": "https://chromium.googlesource.com/chromium/src.git@${CHROMIUM_TAG}",
+              "managed": False,
+              "custom_deps": {
+                "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
+              },
+              "custom_vars": {
+                "checkout_android": True,
+              },
+            },
+          ]
+          target_os = ["android"]
+          GCLIENT
+          cat $HOME/searxgo-build/.gclient
+
+      - name: gclient sync
+        run: |
+          export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
+          cd $HOME/searxgo-build
+          gclient sync \
+            --no-history \
+            --shallow \
+            --delete_unversioned_trees \
+            --reset \
+            --nohooks \
+            --jobs=4
+
+      - name: Verificar .gn
+        run: |
+          test -f $HOME/searxgo-build/src/.gn \
+            && echo ".gn OK" \
+            || (echo ".gn NAO encontrado" && exit 1)
+          df -h /
+
+      - name: Salvar src como artifact (tar.zst para speed)
+        run: |
+          sudo apt-get install -y zstd
+          cd $HOME/searxgo-build
+          tar \
+            --exclude=src/.git \
+            --exclude=src/third_party/blink/web_tests \
+            --exclude=src/third_party/node \
+            --exclude=src/chrome/test \
+            --exclude=src/content/test \
+            -I 'zstd -T0 -1' \
+            -cf /tmp/searxgo-src.tar.zst \
+            src/
+          ls -lh /tmp/searxgo-src.tar.zst
+
+      - name: Upload src artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: searxgo-src
+          path: /tmp/searxgo-src.tar.zst
+          retention-days: 3
