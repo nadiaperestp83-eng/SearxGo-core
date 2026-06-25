@@ -2,11 +2,24 @@ name: 1 - Sync Sources
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'components/**'
+      - 'browser/**'
+      - 'android/**'
+      - 'build/**'
+      - 'chromium_src/**'
+      - 'DEPS'
+      - 'package.json'
 
 jobs:
   sync:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
+    outputs:
+      sync_done: ${{ steps.mark.outputs.sync_done }}
+      run_id: ${{ github.run_id }}
 
     steps:
       - name: Free disk space
@@ -26,7 +39,7 @@ jobs:
           sudo apt-get install -y \
             python3.11 python3.11-distutils python3.11-venv \
             build-essential git curl lsb-release \
-            lib32stdc++6 lib32z1 pkg-config unzip nodejs npm
+            lib32stdc++6 lib32z1 pkg-config unzip nodejs npm zstd
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
           sudo update-alternatives --set python3 /usr/bin/python3.11
           python3 --version
@@ -42,10 +55,14 @@ jobs:
           unzip -qo /tmp/gn.zip -d $HOME/depot_tools
           chmod +x $HOME/depot_tools/gn
           echo "$HOME/depot_tools" >> $GITHUB_PATH
+          export PATH="$HOME/depot_tools:$PATH"
+          gn --version
+          gclient --version
 
       - name: Clonar brave-browser e extrair versão Chromium
         run: |
           export PATH="$HOME/depot_tools:$PATH"
+          export DEPOT_TOOLS_UPDATE=0
           git clone --depth=1 \
             https://github.com/brave/brave-browser.git \
             $HOME/brave-browser
@@ -77,6 +94,7 @@ jobs:
           ]
           target_os = ["android"]
           GCLIENT
+          echo "=== .gclient ==="
           cat $HOME/searxgo-build/.gclient
 
       - name: gclient sync
@@ -92,16 +110,15 @@ jobs:
             --nohooks \
             --jobs=4
 
-      - name: Verificar .gn
+      - name: Verificar .gn e espaço
         run: |
           test -f $HOME/searxgo-build/src/.gn \
             && echo ".gn OK" \
             || (echo ".gn NAO encontrado" && exit 1)
           df -h /
 
-      - name: Salvar src como artifact (tar.zst para speed)
+      - name: Comprimir src
         run: |
-          sudo apt-get install -y zstd
           cd $HOME/searxgo-build
           tar \
             --exclude=src/.git \
@@ -120,3 +137,7 @@ jobs:
           name: searxgo-src
           path: /tmp/searxgo-src.tar.zst
           retention-days: 3
+
+      - name: Marcar sync concluído
+        id: mark
+        run: echo "sync_done=true" >> $GITHUB_OUTPUT
