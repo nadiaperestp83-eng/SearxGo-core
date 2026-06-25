@@ -23,207 +23,78 @@ jobs:
     steps:
       - name: Free disk space agressivo
         run: |
-          echo "=== Antes ==="
-          df -h /
-          # Remove tudo que não é necessário para o build
-          sudo rm -rf \
-            /usr/share/dotnet \
-            /opt/ghc \
-            /usr/local/lib/android \
-            /usr/share/swift \
-            /opt/microsoft \
-            /usr/local/share/boost \
-            /usr/lib/jvm \
-            /usr/share/java \
-            /usr/local/julia* \
-            /opt/pipx \
-            /opt/az \
-            /usr/share/az* \
-            /usr/share/maven \
-            /usr/share/gradle \
-            /usr/share/texlive \
-            /imagegeneration \
-            /usr/share/miniconda \
-            /usr/local/go \
-            /usr/share/rust \
-            /home/runner/.cargo \
-            /home/runner/.rustup \
-            /opt/hostedtoolcache/CodeQL \
-            /opt/hostedtoolcache/Ruby \
-            /opt/hostedtoolcache/go \
-            /opt/hostedtoolcache/node \
-            /opt/hostedtoolcache/PyPy
-          sudo apt-get remove -y \
-            azure-cli \
-            google-cloud-cli \
-            microsoft-edge-stable \
-            firefox \
-            mono-complete \
-            powershell \
-            || true
-          sudo apt-get autoremove -y
-          sudo apt-get clean
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/share/swift /opt/microsoft /usr/local/share/boost /usr/lib/jvm /usr/share/java /usr/local/julia* /opt/pipx /opt/az /usr/share/az* /usr/share/maven /usr/share/gradle /usr/share/texlive /imagegeneration /usr/share/miniconda /usr/local/go /usr/share/rust /home/runner/.cargo /home/runner/.rustup /opt/hostedtoolcache/*
+          sudo apt-get remove -y azure-cli google-cloud-cli microsoft-edge-stable firefox mono-complete powershell || true
+          sudo apt-get autoremove -y && sudo apt-get clean
           docker system prune -af 2>/dev/null || true
-          echo "=== Depois ==="
-          df -h /
 
-      - name: Install Python 3.11 e dependências mínimas
+      - name: Install Python e dependências mínimas
         run: |
-          sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository -y ppa:deadsnakes/ppa
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3.11 \
-            python3.11-distutils \
-            python3.11-venv \
-            build-essential \
-            git \
-            curl \
-            lsb-release \
-            lib32stdc++6 \
-            lib32z1 \
-            pkg-config \
-            unzip \
-            zstd
+          sudo apt-get update && sudo apt-get install -y python3.11 build-essential git curl lsb-release zstd
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-          sudo update-alternatives --set python3 /usr/bin/python3.11
-          python3 --version
-          df -h /
 
-      - name: Setup depot_tools e GN binário real
+      - name: Setup depot_tools e GN binário
         run: |
-          git clone --depth=1 \
-            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-            $HOME/depot_tools
-          # Remove wrapper Python — instala binário real para evitar cipd no gn
+          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           rm -f $HOME/depot_tools/gn
-          curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" \
-            -o /tmp/gn.zip
-          unzip -qo /tmp/gn.zip -d $HOME/depot_tools
-          chmod +x $HOME/depot_tools/gn
+          curl -sL "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest" -o /tmp/gn.zip
+          unzip -qo /tmp/gn.zip -d $HOME/depot_tools && chmod +x $HOME/depot_tools/gn
           echo "$HOME/depot_tools" >> $GITHUB_PATH
-          export PATH="$HOME/depot_tools:$PATH"
-          gn --version
-          gclient --version
 
-      - name: Clonar brave-browser e extrair versão Chromium
+      - name: Obter tag Chromium
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
-          export DEPOT_TOOLS_UPDATE=0
-          git clone --depth=1 \
-            https://github.com/brave/brave-browser.git \
-            $HOME/brave-browser
-          CHROMIUM_TAG=$(python3 -c "
-          import json
-          d = json.load(open('$HOME/brave-browser/package.json'))
-          tag = d.get('config',{}).get('projects',{}).get('chrome',{}).get('tag','')
-          print(tag)
-          ")
-          echo "CHROMIUM_TAG=$CHROMIUM_TAG" >> $GITHUB_ENV
-          echo "Tag: $CHROMIUM_TAG"
-          # Remove brave-browser — não precisamos mais dele
+          git clone --depth=1 https://github.com/brave/brave-browser.git $HOME/brave-browser
+          TAG=$(python3 -c "import json; print(json.load(open('$HOME/brave-browser/package.json'))['config']['projects']['chrome']['tag'])")
+          echo "CHROMIUM_TAG=$TAG" >> $GITHUB_ENV
           rm -rf $HOME/brave-browser
-          df -h /
 
       - name: Escrever .gclient minimalista
         run: |
           mkdir -p $HOME/searxgo-build
           cat > $HOME/searxgo-build/.gclient << GCLIENT
-          solutions = [
-            {
-              "name": "src",
-              "url": "https://chromium.googlesource.com/chromium/src.git@${CHROMIUM_TAG}",
-              "managed": False,
-              "custom_deps": {
-                "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
-                # Exclui deps desnecessários — economiza ~8GB de disco
-                "src/third_party/blink/web_tests": None,
-                "src/third_party/node": None,
-                "src/third_party/nodejs": None,
-                "src/third_party/rust": None,
-                "src/third_party/perfetto": None,
-                "src/chrome/test/data": None,
-                "src/content/test/data": None,
-                "src/third_party/pdfium": None,
-                "src/chrome/browser/resources/pdf": None,
-                "src/third_party/widevine": None,
-                "src/third_party/angle/third_party/glslang": None,
-                "src/third_party/llvm-build": None,
-                "src/tools/perf": None,
-                "src/third_party/catapult": None,
-              },
-              "custom_vars": {
-                "checkout_android": True,
-                "checkout_android_native_support": False,
-                "checkout_nacl": False,
-                "checkout_libaom": False,
-                "checkout_openxr": False,
-                "checkout_aemu_source": False,
-              },
+          solutions = [{
+            "name": "src",
+            "url": "https://chromium.googlesource.com/chromium/src.git@${CHROMIUM_TAG}",
+            "managed": False,
+            "custom_deps": {
+              "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
+              "src/third_party/blink/web_tests": None, "src/third_party/node": None,
+              "src/third_party/nodejs": None, "src/third_party/rust": None,
+              "src/third_party/perfetto": None, "src/chrome/test/data": None,
+              "src/content/test/data": None, "src/third_party/pdfium": None,
+              "src/chrome/browser/resources/pdf": None, "src/third_party/widevine": None,
+              "src/third_party/llvm-build": None, "src/tools/perf": None,
+              "src/third_party/catapult": None, "src/third_party/angle": None,
             },
-          ]
-          target_os = ["android"]
+            "custom_vars": {
+              "checkout_android": True, "checkout_android_native_support": False,
+              "checkout_nacl": False, "checkout_libaom": False,
+              "checkout_openxr": False, "checkout_aemu_source": False,
+            },
+          }]
           GCLIENT
-          cat $HOME/searxgo-build/.gclient
 
-      - name: gclient sync sem hooks
+      - name: gclient sync
         run: |
           export PATH="$HOME/depot_tools:$PATH"
-          export DEPOT_TOOLS_UPDATE=0
-          # Desativa métricas do gclient
-          export DEPOT_TOOLS_METRICS=0
           cd $HOME/searxgo-build
-          gclient sync \
-            --no-history \
-            --shallow \
-            --delete_unversioned_trees \
-            --reset \
-            --nohooks \
-            --jobs=2
-          echo "=== Espaço após sync ==="
-          df -h /
+          gclient sync --no-history --shallow --delete_unversioned_trees --reset --nohooks --jobs=4
 
-      - name: Rodar apenas hooks essenciais (sem generate_location_tags)
+      - name: Comprimir src (Limpeza Extrema)
         run: |
-          export PATH="$HOME/depot_tools:$PATH"
-          export DEPOT_TOOLS_UPDATE=0
-          export DEPOT_TOOLS_METRICS=0
           cd $HOME/searxgo-build
-          # Roda só os hooks críticos — pula cipd e location_tags que enchem o disco
-          python3 src/build/util/lastchange.py -o src/build/util/LASTCHANGE || true
-          python3 src/build/util/lastchange.py \
-            -m GPU_LISTS_VERSION \
-            --revision-id-only \
-            --header src/gpu/config/gpu_lists_version.h || true
-          python3 src/build/util/lastchange.py \
-            -m SKIA_COMMIT_HASH \
-            -s src/third_party/skia \
-            --header src/skia/ext/skia_commit_hash.h || true
-          echo "=== Hooks essenciais concluídos ==="
-          df -h /
-
-      - name: Comprimir src
-        run: |
-          echo "=== Espaço antes de comprimir ==="
-          df -h /
-          cd $HOME/searxgo-build
-          # Exclui arquivos de teste e web_tests para economizar espaço
-          tar \
-            --exclude=src/.git \
-            --exclude=src/third_party/blink/web_tests \
-            --exclude=src/third_party/node \
-            --exclude=src/chrome/test \
-            --exclude=src/content/test \
-            --exclude=src/third_party/catapult \
-            --exclude=src/tools/perf \
-            --exclude='src/**/*.pyc' \
-            --exclude='src/**/__pycache__' \
-            -I 'zstd -T2 -1' \
-            -cf /tmp/searxgo-src.tar.zst \
-            src/
+          tar --exclude=src/.git \
+              --exclude=src/third_party/blink/web_tests \
+              --exclude=src/third_party/node \
+              --exclude=src/chrome/test \
+              --exclude=src/content/test \
+              --exclude=src/third_party/catapult \
+              --exclude=src/tools/perf \
+              --exclude='src/**/*.pyc' \
+              --exclude='src/**/__pycache__' \
+              --exclude=src/out \
+              -I 'zstd -T2 -19' -cf /tmp/searxgo-src.tar.zst src/
           ls -lh /tmp/searxgo-src.tar.zst
-          df -h /
 
       - name: Upload src artifact
         uses: actions/upload-artifact@v4
