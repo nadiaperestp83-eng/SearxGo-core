@@ -16,7 +16,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 180  # Aumentado para 3h (mas deve terminar em ~30min)
     outputs:
       sync_done: ${{ steps.mark.outputs.sync_done }}
 
@@ -65,17 +65,18 @@ jobs:
           echo "CHROMIUM_TAG=$TAG" >> $GITHUB_ENV
           rm -rf $HOME/brave-browser
 
-      # .gclient com exclusões máximas (evita baixar depots gigantes)
+      # .gclient com exclusões MÁXIMAS (remove módulos pesados e desnecessários)
       - name: Escrever .gclient minimalista
         run: |
           mkdir -p $HOME/searxgo-build
-          cat > $HOME/searxgo-build/.gclient << GCLIENT
+          cat > $HOME/searxgo-build/.gclient << 'GCLIENT'
           solutions = [{
             "name": "src",
             "url": "https://chromium.googlesource.com/chromium/src.git@${CHROMIUM_TAG}",
             "managed": False,
             "custom_deps": {
               "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
+              # === MÓDULOS EXCLUÍDOS PARA REDUZIR TAMANHO ===
               "src/third_party/blink/web_tests": None,
               "src/third_party/node": None,
               "src/third_party/nodejs": None,
@@ -90,12 +91,27 @@ jobs:
               "src/tools/perf": None,
               "src/third_party/catapult": None,
               "src/third_party/angle": None,
-              "src/third_party/depot_tools": None,   # <-- EVITA DUPLICAR DEPOT_TOOLS
+              "src/third_party/depot_tools": None,
               "src/third_party/android_tools": None,
               "src/third_party/rust-toolchain": None,
               "src/third_party/dawn": None,
               "src/third_party/breakpad": None,
               "src/third_party/crashpad": None,
+              # === NOVAS EXCLUSÕES (mais agressivas) ===
+              "src/third_party/webrtc": None,
+              "src/third_party/ffmpeg": None,
+              "src/third_party/opus": None,
+              "src/third_party/libvpx": None,
+              "src/third_party/openh264": None,
+              "src/third_party/libaom": None,
+              "src/third_party/libyuv": None,
+              "src/third_party/sqlite": None,
+              "src/third_party/leveldatabase": None,
+              "src/third_party/boringssl": None,
+              "src/third_party/protobuf": None,
+              "src/third_party/jsoncpp": None,
+              "src/third_party/re2": None,
+              "src/third_party/zlib": None,  # cuidado: pode ser necessário, mas tentamos
             },
             "custom_vars": {
               "checkout_android": True,
@@ -145,17 +161,20 @@ jobs:
           test -f $HOME/searxgo-build/src/.gn || (echo ".gn não encontrado" && exit 1)
           df -h /
 
-      # Remoção manual de diretórios que ainda possam estar ocupando espaço
+      # Remoção manual de diretórios que ainda possam estar ocupando espaço (pós-sync)
       - name: Limpeza pós-sync
         run: |
           cd $HOME/searxgo-build/src
           rm -rf third_party/llvm-build third_party/android_tools third_party/rust-toolchain \
                  third_party/dawn third_party/angle third_party/catapult \
                  third_party/breakpad third_party/crashpad \
+                 third_party/webrtc third_party/pdfium third_party/ffmpeg \
+                 third_party/opus third_party/libvpx third_party/openh264 \
+                 third_party/libaom third_party/libyuv \
                  chrome/test/data content/test/data tools/perf out
           df -h /
 
-      # Compressão com baixo consumo de RAM e exclusões extras
+      # Compressão com baixo consumo de RAM e exclusões extras (inclui as novas)
       - name: Comprimir src
         run: |
           cd $HOME/searxgo-build
@@ -176,6 +195,13 @@ jobs:
             --exclude=src/third_party/dawn \
             --exclude=src/third_party/angle \
             --exclude=src/third_party/catapult \
+            --exclude=src/third_party/webrtc \
+            --exclude=src/third_party/ffmpeg \
+            --exclude=src/third_party/opus \
+            --exclude=src/third_party/libvpx \
+            --exclude=src/third_party/openh264 \
+            --exclude=src/third_party/libaom \
+            --exclude=src/third_party/libyuv \
             --exclude='src/**/*.pyc' \
             --exclude='src/**/__pycache__' \
             -I 'zstd -T2 -3 --memory=1024' \
