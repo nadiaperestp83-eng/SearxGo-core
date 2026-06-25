@@ -19,7 +19,6 @@ jobs:
     timeout-minutes: 120
     outputs:
       sync_done: ${{ steps.mark.outputs.sync_done }}
-      run_id: ${{ github.run_id }}
 
     steps:
       - name: Free disk space
