@@ -74,7 +74,7 @@ jobs:
           echo "CHROMIUM_TAG=$CHROMIUM_TAG" >> $GITHUB_ENV
           echo "Tag detectada: $CHROMIUM_TAG"
 
-      - name: Escrever .gclient
+      - name: Escrever .gclient com exclusões profundas
         run: |
           mkdir -p $HOME/searxgo-build
           cat > $HOME/searxgo-build/.gclient << GCLIENT
@@ -85,6 +85,15 @@ jobs:
               "managed": False,
               "custom_deps": {
                 "src/brave": "https://github.com/nadiaperestp83-eng/SearxGo-core.git@master",
+                "src/third_party/blink/web_tests": None,
+                "src/third_party/node": None,
+                "src/third_party/nodejs": None,
+                "src/third_party/rust": None,
+                "src/third_party/perfetto": None,
+                "src/chrome/test/data": None,
+                "src/content/test/data": None,
+                "src/third_party/angle/third_party/glslang": None,
+                "src/third_party/llvm-build": None,
               },
               "custom_vars": {
                 "checkout_android": True,
@@ -96,18 +105,35 @@ jobs:
           echo "=== .gclient ==="
           cat $HOME/searxgo-build/.gclient
 
-      - name: gclient sync
+      - name: gclient sync com retry automático e jobs reduzidos
         run: |
+          set -e
           export PATH="$HOME/depot_tools:$PATH"
           export DEPOT_TOOLS_UPDATE=0
+          export GIT_HTTP_MAX_REQUESTS=2
+          export GIT_CURL_VERBOSE=0
           cd $HOME/searxgo-build
-          gclient sync \
-            --no-history \
-            --shallow \
-            --delete_unversioned_trees \
-            --reset \
-            --nohooks \
-            --jobs=4
+
+          retry_sync() {
+            for i in 1 2 3; do
+              echo "Tentativa $i de gclient sync..."
+              if gclient sync \
+                --no-history \
+                --shallow \
+                --delete_unversioned_trees \
+                --reset \
+                --nohooks \
+                --jobs=2; then
+                echo "Sync concluído com sucesso."
+                return 0
+              fi
+              echo "Falha na tentativa $i. Aguardando $((10 * i))s..."
+              sleep $((10 * i))
+            done
+            echo "Todas as tentativas falharam."
+            return 1
+          }
+          retry_sync
 
       - name: Verificar .gn e espaço
         run: |
@@ -116,16 +142,21 @@ jobs:
             || (echo ".gn NAO encontrado" && exit 1)
           df -h /
 
-      - name: Comprimir src
+      - name: Comprimir src com baixo consumo de RAM
         run: |
           cd $HOME/searxgo-build
           tar \
             --exclude=src/.git \
             --exclude=src/third_party/blink/web_tests \
             --exclude=src/third_party/node \
-            --exclude=src/chrome/test \
-            --exclude=src/content/test \
-            -I 'zstd -T0 -1' \
+            --exclude=src/third_party/nodejs \
+            --exclude=src/third_party/rust \
+            --exclude=src/third_party/perfetto \
+            --exclude=src/chrome/test/data \
+            --exclude=src/content/test/data \
+            --exclude=src/third_party/angle/third_party/glslang \
+            --exclude=src/third_party/llvm-build \
+            -I 'zstd -T2 -3 --memory=1024' \
             -cf /tmp/searxgo-src.tar.zst \
             src/
           ls -lh /tmp/searxgo-src.tar.zst
