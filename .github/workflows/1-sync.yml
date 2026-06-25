@@ -42,19 +42,19 @@ jobs:
           sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
           sudo update-alternatives --set python3 /usr/bin/python3.11
 
-      - name: Setup depot_tools
+      - name: Setup depot_tools e GN
         run: |
           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           echo "$HOME/depot_tools" >> $GITHUB_PATH
           export PATH="$HOME/depot_tools:$PATH"
 
-      - name: Clonar brave-browser e extrair tag
+      - name: Clonar brave-browser
         run: |
           git clone --depth=1 https://github.com/brave/brave-browser.git $HOME/brave-browser
           CHROMIUM_TAG=$(python3 -c "import json; d = json.load(open('$HOME/brave-browser/package.json')); print(d.get('config',{}).get('projects',{}).get('chrome',{}).get('tag',''))")
           echo "CHROMIUM_TAG=$CHROMIUM_TAG" >> $GITHUB_ENV
 
-      - name: Escrever .gclient
+      - name: Escrever .gclient (Minimalista)
         run: |
           mkdir -p $HOME/searxgo-build
           cat > $HOME/searxgo-build/.gclient << GCLIENT
@@ -74,6 +74,8 @@ jobs:
                 "src/content/test/data": None,
                 "src/third_party/angle/third_party/glslang": None,
                 "src/third_party/llvm-build": None,
+                "src/chrome/browser/resources/pdf": None,
+                "src/third_party/pdfium": None,
               },
               "custom_vars": {"checkout_android": True},
             },
@@ -81,15 +83,17 @@ jobs:
           target_os = ["android"]
           GCLIENT
 
-      - name: gclient sync
+      - name: gclient sync (Resiliente)
         run: |
           export PATH="$HOME/depot_tools:$PATH"
           cd $HOME/searxgo-build
+          # jobs=2 evita gargalo de rede e thrashing de CPU
           gclient sync --no-history --shallow --delete_unversioned_trees --reset --nohooks --jobs=2
 
-      - name: Comprimir src
+      - name: Comprimir src (Compressão Rápida)
         run: |
           cd $HOME/searxgo-build
+          # -T2 limita threads de compressão, --memory=1024 evita OOM Killer
           tar -I 'zstd -T2 -3 --memory=1024' -cf /tmp/searxgo-src.tar.zst src/
 
       - name: Upload src artifact
